@@ -14,9 +14,6 @@ public class CipherSolver {
 		System.out.println("  CAESAR: " + caesar(cipher));
 		System.out.println("  ATBASH: " + atbash(cipher));
 		System.out.println("   A1Z26: " + a1z26(cipher));
-		System.out.println("     ALL: " + caesar(atbash(a1z26(cipher))));
-		System.out.println("     R/C: " + reverse(caesar(cipher), true));
-		//System.out.println("VIGENERE: " + vigenereByWord(cipher));
 
 		System.out.print("\nEnter key for Vigenere: ");
 		String vigenereKey = scan.nextLine().split(" ")[0];
@@ -25,7 +22,7 @@ public class CipherSolver {
 		}
 	}
 
-	public static String reverse(String input, boolean reverseSpaces) {
+	public static String reverse(String input) {
 		return new StringBuilder(input).reverse().toString();
 	}
 

@@ -6,17 +6,19 @@ import utils.WordUtils;
 import java.util.*;
 
 public class AnagramSolver {
+	private static final int MAX_RESULTS = 20;
+	private static final int MAX_WORDS = 3;
+
 	public static void main(String[] args) {
 		Scanner scan = new Scanner(System.in);
 		System.out.print("Enter the anagram. ");
 		String anagram = WordUtils.cleanWord(scan.nextLine());
 
-		final int maxResults = 20;
-		List<String> results = solveAnagram(anagram, 2);
+		List<String> results = solveAnagram(anagram, MAX_WORDS);
 		List<String> trueRes = new ArrayList<>();
 
 		System.out.println("Got Results (" + results.size() + "). Sorting...");
-		if (results.size() > maxResults) {
+		if (results.size() > MAX_RESULTS) {
 			Map<String, Double> scores = new HashMap<>();
 			double bestScore = Integer.MAX_VALUE;
 			String bestPhrase = "";
@@ -37,7 +39,7 @@ public class AnagramSolver {
 			results.remove(bestPhrase);
 			trueRes.add(bestPhrase);
 			System.out.println("Decided 1");
-			for (int topScore = 1; topScore < maxResults; topScore++) {
+			for (int topScore = 1; topScore < MAX_RESULTS; topScore++) {
 				bestScore = Integer.MAX_VALUE;
 				bestPhrase = "";
 				for (String res : results) {
