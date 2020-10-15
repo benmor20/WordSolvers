@@ -18,7 +18,6 @@ public class WordUtils {
 		try {
 			String line;
 			dictionary = new ArrayList<>();
-			dictTree = new DictionaryNode(null, null, false);
 			frequencies = new HashMap<>();
 			rankings = new HashMap<>();
 			int rank = 1;
@@ -35,15 +34,10 @@ public class WordUtils {
 			BufferedReader dictReader = new BufferedReader(new FileReader(dictPath));
 			while ((line = dictReader.readLine()) != null) {
 				dictionary.add(line);
-				DictionaryNode currentNode = dictTree;
-				for (int index = 0; index < line.length() - 1; index++) {
-					char c = line.charAt(index);
-					if (currentNode.hasChild(c)) currentNode = currentNode.getChild(c);
-					else currentNode = currentNode.addChild(c, false);
-				}
-				currentNode.addChild(line.charAt(line.length() - 1), true);
 			}
 			dictReader.close();
+
+			dictTree = createDictionaryTree(dictionary);
 		} catch (IOException e) {
 			System.out.println(e.getMessage());
 			for (StackTraceElement o : e.getStackTrace()) {
@@ -52,7 +46,8 @@ public class WordUtils {
 		}
 	}
 	public static void readDict() {
-		readDict("C:/Users/ben/OneDrive/IntelliJ/Testing/src/word_solver/words.txt", "C:/Users/ben/OneDrive/IntelliJ/Testing/src/word_solver/frequencies.txt");
+		String path = System.getProperty("user.dir") + "\\src\\data\\";
+		readDict(path + "words.txt", path + "frequencies.txt");
 	}
 
 	public static boolean isWord(String word) {
@@ -114,5 +109,19 @@ public class WordUtils {
 			if (rankingEntry.getValue() == ranking) return rankingEntry.getKey();
 		}
 		return null;
+	}
+
+	public static DictionaryNode createDictionaryTree(List<String> words) {
+		DictionaryNode topNode = new DictionaryNode();
+		for (String word : words) {
+			DictionaryNode currentNode = topNode;
+			for (int index = 0; index < word.length() - 1; index++) {
+				char c = word.charAt(index);
+				if (currentNode.hasChild(c)) currentNode = currentNode.getChild(c);
+				else currentNode = currentNode.addChild(c, false);
+			}
+			currentNode.addChild(word.charAt(word.length() - 1), true);
+		}
+		return topNode;
 	}
 }

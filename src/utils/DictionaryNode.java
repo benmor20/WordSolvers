@@ -39,6 +39,7 @@ public class DictionaryNode {
 	}
 
 	public DictionaryNode getChild(char path) {
+		if (path >= 'A' && path <= 'Z') path = (char)(path - 'A' + 'a'); // make lowercase
 		return this.childMap.get(path);
 	}
 	public DictionaryNode getChild(String path) {
@@ -58,6 +59,7 @@ public class DictionaryNode {
 	}
 
 	public boolean hasChild(char path) {
+		if (path >= 'A' && path <= 'Z') path = (char)(path - 'A' + 'a'); // make lowercase
 		return this.childMap.get(path) != null;
 	}
 	public boolean hasChild(String path) {
