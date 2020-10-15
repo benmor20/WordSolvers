@@ -1,23 +1,21 @@
 package main;
 
+import utils.GetUserInput;
 import utils.WordUtils;
 
 import java.util.*;
 
 public class CipherSolver {
 	public static void main(String[] args) {
-		Scanner scan = new Scanner(System.in);
-		System.out.print("Enter the cipher: ");
-		String cipher = scan.nextLine();
+		String cipher = GetUserInput.getString("Enter the cipher. ");
 
 		WordUtils.readDict();
 		System.out.println("  CAESAR: " + caesar(cipher));
 		System.out.println("  ATBASH: " + atbash(cipher));
 		System.out.println("   A1Z26: " + a1z26(cipher));
 
-		System.out.print("\nEnter key for Vigenere: ");
-		String vigenereKey = scan.nextLine().split(" ")[0];
-		if (vigenereKey.length() > 0) {
+		String vigenereKey = GetUserInput.getString("\nEnter key for Vigenere, or e to exit: ");
+		if (!vigenereKey.equalsIgnoreCase("e") && vigenereKey.length() > 0) {
 			System.out.println("VIGENERE: " + vigenere(cipher, vigenereKey));
 		}
 	}

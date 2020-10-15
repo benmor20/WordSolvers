@@ -1,6 +1,7 @@
 package main;
 
 import utils.DictionaryNode;
+import utils.GetUserInput;
 import utils.WordUtils;
 
 import java.util.*;
@@ -10,9 +11,7 @@ public class AnagramSolver {
 	private static final int MAX_WORDS = 3;
 
 	public static void main(String[] args) {
-		Scanner scan = new Scanner(System.in);
-		System.out.print("Enter the anagram. ");
-		String anagram = WordUtils.cleanWord(scan.nextLine());
+		String anagram = GetUserInput.getString("Enter the anagram. ");
 
 		List<String> results = solveAnagram(anagram, MAX_WORDS);
 		List<String> trueRes = new ArrayList<>();
