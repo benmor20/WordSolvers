@@ -1,0 +1,106 @@
+package utils;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+
+public class DictionaryNode {
+	private DictionaryNode parent;
+	private Character parentPath;
+	private final Map<Character, DictionaryNode> childMap;
+	private final boolean isWord;
+
+	public DictionaryNode() {
+		this(null, null);
+	}
+	public DictionaryNode(DictionaryNode parent, Character parentPath) {
+		this(parent, parentPath, false);
+	}
+	public DictionaryNode(DictionaryNode parent, Character parentPath, boolean isWord) {
+		this.parent = parent;
+		this.parentPath = parentPath;
+		this.childMap = new HashMap<>();
+		this.isWord = isWord;
+	}
+
+	public boolean isWord() {
+		return this.isWord;
+	}
+
+	public DictionaryNode addChild(char path, boolean isWord) {
+		this.childMap.put(path, new DictionaryNode(this, path, isWord));
+		return this.childMap.get(path);
+	}
+	public DictionaryNode addChild(char path, DictionaryNode child) {
+		this.childMap.put(path, child);
+		child.parent = this;
+		child.parentPath = path;
+		return child;
+	}
+
+	public DictionaryNode getChild(char path) {
+		return this.childMap.get(path);
+	}
+	public DictionaryNode getChild(String path) {
+		return this.getChild(path.toCharArray());
+	}
+	public DictionaryNode getChild(char... path) {
+		DictionaryNode currentNode = this;
+		for (char c : path) {
+			currentNode = currentNode.getChild(c);
+			if (currentNode == null) return null;
+		}
+		return currentNode;
+	}
+
+	public Set<Map.Entry<Character,DictionaryNode>> getChildren() {
+		return this.childMap.entrySet();
+	}
+
+	public boolean hasChild(char path) {
+		return this.childMap.get(path) != null;
+	}
+	public boolean hasChild(String path) {
+		return this.hasChild(path.toCharArray());
+	}
+	public boolean hasChild(char[] path) {
+		DictionaryNode currentNode = this;
+		for (char c : path) {
+			if (!currentNode.hasChild(c)) return false;
+			currentNode = currentNode.getChild(c);
+		}
+		return true;
+	}
+
+	public boolean isTop() {
+		return this.parent == null;
+	}
+
+	public DictionaryNode getParent() {
+		return this.parent;
+	}
+
+	public DictionaryNode returnToTop() {
+		DictionaryNode currentNode = this;
+		while (currentNode.parentPath != null) {
+			currentNode = currentNode.parent;
+		}
+		return currentNode;
+	}
+
+	public int length() {
+		if (this.parent == null) return 0;
+		return this.parent.length() + 1;
+	}
+
+	@Override
+	public String toString() {
+		StringBuilder str = new StringBuilder();
+		DictionaryNode currentNode = this;
+		while (!currentNode.isTop()) {
+			str.append(currentNode.parentPath);
+			currentNode = currentNode.parent;
+		}
+		return str.reverse().toString();
+	}
+}
