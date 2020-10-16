@@ -17,3 +17,7 @@
  - MIN_WORD_LEN: Minimum length of allowed words
  - NUM_ACCEPTABLE_WORDS: How many words the program can choose from. A value of 5000 will choose from the top 5000 most
      common words which are at least MIN_WORD_LEN in length.
+
+ Word Search Solver:
+ Solves word searches, given either a list of words, or using the dictionary.
+ - WORD_SEARCH: A String representation of the word search, each line separated by \n.

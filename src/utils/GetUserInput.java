@@ -1,5 +1,6 @@
 package utils;
 
+import java.util.Collection;
 import java.util.Scanner;
 
 public class GetUserInput {
@@ -66,6 +67,23 @@ public class GetUserInput {
 				}
 			}
 			
+			System.out.println("Please enter one of the options.");
+		}
+	}
+	public static String getString(String phrase, Collection<String> ans, boolean caseSensitive) {
+		while(true) {
+			System.out.print(phrase);
+			String str = SCANNER.nextLine();
+
+			for (String poss : ans) {
+				if(caseSensitive) {
+					if(poss.equals(str)) return str.toLowerCase();
+				}
+				else {
+					if(poss.equalsIgnoreCase(str)) return str;
+				}
+			}
+
 			System.out.println("Please enter one of the options.");
 		}
 	}
