@@ -129,7 +129,6 @@ public class WordSearchSolver {
 					int maxRow = wordInfo.startRow + scales[0] * (len - 1),
 							maxCol = wordInfo.startCol + scales[1] * (len - 1); // might not be max, but the isBetween function will handle that case
 
-					System.out.println(wordInfo.startRow + " " + maxRow + " " + wordInfo.startCol + " " + maxCol);
 					// Print board, capitalizing the word
 					for (int row = 0; row < wordSearch.length; row++) {
 						for (int col = 0; col < wordSearch[row].length; col++) {
