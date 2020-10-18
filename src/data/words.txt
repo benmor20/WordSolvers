@@ -134470,11 +134470,6 @@ hcf
 hcl
 hconvert
 hd
-hdbk
-hdkf
-hdlc
-hdqrs
-hdwe
 he
 head
 headache
