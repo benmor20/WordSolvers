@@ -5,25 +5,52 @@ import utils.GetUserInput;
 import utils.WordUtils;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class CrosswordSolver {
 	public static void main(String[] args) {
 		// Get input
-		String unknown = GetUserInput.getString("Enter the word, with '_' for unknown letters. ");
+		String unknown = GetUserInput.getString("Enter the word, with '_' for unknown letters. ").toLowerCase();
 		System.out.println();
 
 		// Create list of all possibilities for each position
-		List<List<Character>> letters = new ArrayList<>();
-		for (char c : unknown.toLowerCase().toCharArray()) {
+		List<Set<Character>> letters = new ArrayList<>();
+		for (int index = 0; index < unknown.length(); index++) {
+			char c = unknown.charAt(index);
 			if (c == '_') {
-				letters.add(allCharacterList());
+				letters.add(allCharacterSet());
 			} else if (c >= 'a' && c <= 'z') {
-				letters.add(new ArrayList<>() {{
-					this.add(c);
-				}});
+				Set<Character> letter = new HashSet<>();
+				letter.add(c);
+				letters.add(letter);
+			} else if (c == '[') {
+				// Move to first element inside square bracket
+				index++;
+
+				Set<Character> blank = new HashSet<>();
+				boolean negated = false;
+
+				// If first character is a ^, initialize blank as all characters and set negated flag, then move to next element
+				if (unknown.charAt(index) == '^') {
+					negated = true;
+					blank = allCharacterSet();
+					index++;
+				}
+
+				// Add or subtract each element of the square bracket
+				for (c = unknown.charAt(index); c != ']'; index++, c = unknown.charAt(index)) {
+					if (c >= 'a' && c <= 'z') {
+						if (negated) blank.remove(c);
+						else blank.add(c);
+					} else {
+						throw new IllegalArgumentException("Unexpected character: " + c + " (index " + index + ").");
+					}
+				}
+				letters.add(blank);
 			} else {
-				throw new IllegalArgumentException("Unknown character: " + c);
+				throw new IllegalArgumentException("Unexpected character: " + c + " (index " + index + ").");
 			}
 		}
 
@@ -40,7 +67,7 @@ public class CrosswordSolver {
 		}
 	}
 
-	private static List<String> possibleWords(List<List<Character>> letters, DictionaryNode currentNode) {
+	private static List<String> possibleWords(List<Set<Character>> letters, DictionaryNode currentNode) {
 		List<String> ret = new ArrayList<>();
 
 		// If no more letters, return list containing current word, or empty list if currentNode is not a word
@@ -59,8 +86,8 @@ public class CrosswordSolver {
 	}
 
 	// Returns a list containing each letter from a to z
-	private static List<Character> allCharacterList() {
-		return new ArrayList<>() {{
+	private static Set<Character> allCharacterSet() {
+		return new HashSet<>() {{
 			for (char c = 'a'; c <= 'z'; c++) {
 				this.add(c);
 			}

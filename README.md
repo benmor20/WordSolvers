@@ -16,10 +16,10 @@
    (where some but not all letters are known)
    Simplified Regex:
      _ - blank character. Can be any letter.
-
-     Coming soon:
      [abc] - one character that can match a, b, or c
      [^abc] - one character that can match anything except a, b, or c
+
+     Coming soon:
      [abc/defg/hi] - matches "abc", "defg", or "hi"
      [2,5] - matches between 2 and 5 blanks (inclusive)
      [2,] - matches at least 2 blanks
@@ -27,14 +27,15 @@
      [,] - matches any number of blanks
      [2,abc] - matches at least 2 blanks, all limited to a, b, or c
      [2,^abc] - matches at least 2 blanks, all limited to anything except a, b, or c
-     {cde} - at end of phrase, will limit all unrestricted blanks to c, d, or e. ^ operator works as well.
-        - _{cde} will match c, d, or e
-        - [abc]{cde} will match a, b, or c
-        - [^abc]{cde} will match any letter except a, b, or c
-     (cde) - at end of phrase, will limit all blanks (restricted or not) to c, d, or e. ^ operator works as well.
+     (cde) - at end of phrase, will limit all unrestricted blanks to c, d, or e. ^ operator works as well.
         - _(cde) will match c, d, or e
-        - [abc](cde) will match only c
-        - [^abc](cde) will match d or e
+        - [abc](cde) will match a, b, or c
+        - [^abc](cde) will match any letter except a, b, or c
+        - [^](cde) will match any letter
+     {cde} - at end of phrase, will limit all blanks (restricted or not) to c, d, or e. ^ operator works as well.
+        - _{cde} will match c, d, or e
+        - [abc]{cde} will match only c
+        - [^abc]{cde} will match d or e
 
  Word Jumble: Creates anagrams for a "word jumble" game. Adjust game settings in code.
  - JUMBLE_LEN: number of words in the jumble
