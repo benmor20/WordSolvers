@@ -8,7 +8,7 @@ public class DictionaryNode {
 	private DictionaryNode parent;
 	private Character parentPath;
 	private final Map<Character, DictionaryNode> childMap;
-	private final boolean isWord;
+	private boolean isWord;
 
 	public DictionaryNode() {
 		this(null, null);
@@ -25,6 +25,9 @@ public class DictionaryNode {
 
 	public boolean isWord() {
 		return this.isWord;
+	}
+	public void setIsWord(boolean isWord) {
+		this.isWord = isWord;
 	}
 
 	public DictionaryNode addChild(char path, boolean isWord) {

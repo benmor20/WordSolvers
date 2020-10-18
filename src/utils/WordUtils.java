@@ -120,7 +120,9 @@ public class WordUtils {
 				if (currentNode.hasChild(c)) currentNode = currentNode.getChild(c);
 				else currentNode = currentNode.addChild(c, false);
 			}
-			currentNode.addChild(word.charAt(word.length() - 1), true);
+			char last = word.charAt(word.length() - 1);
+			if (currentNode.hasChild(last)) currentNode.getChild(last).setIsWord(true);
+			else currentNode.addChild(last, true);
 		}
 		return topNode;
 	}
