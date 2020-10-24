@@ -18,15 +18,15 @@
      _ - blank character. Can be any letter.
      [abc] - one character that can match a, b, or c
      [^abc] - one character that can match anything except a, b, or c
-
-     Coming soon:
-     [abc/defg/hi] - matches "abc", "defg", or "hi"
      [2,5] - matches between 2 and 5 blanks (inclusive)
      [2,] - matches at least 2 blanks
      [,5] - matches up to 5 blanks (inclusive)
      [,] - matches any number of blanks
      [2,abc] - matches at least 2 blanks, all limited to a, b, or c
      [2,^abc] - matches at least 2 blanks, all limited to anything except a, b, or c
+
+     Coming soon:
+     [abc/defg/hi] - matches "abc", "defg", or "hi"
      (cde) - at end of phrase, will limit all unrestricted blanks to c, d, or e. ^ operator works as well.
         - _(cde) will match c, d, or e
         - [abc](cde) will match a, b, or c
