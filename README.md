@@ -24,18 +24,21 @@
      [,] - matches any number of blanks
      [2,abc] - matches at least 2 blanks, all limited to a, b, or c
      [2,^abc] - matches at least 2 blanks, all limited to anything except a, b, or c
-
-     Coming soon:
-     [abc/defg/hi] - matches "abc", "defg", or "hi"
-     (cde) - at end of phrase, will limit all unrestricted blanks to c, d, or e. ^ operator works as well.
+     (cde) - Soft Filter - at end of phrase, will limit all unrestricted blanks to c, d, or e.
         - _(cde) will match c, d, or e
         - [abc](cde) will match a, b, or c
         - [^abc](cde) will match any letter except a, b, or c
         - [^](cde) will match any letter
-     {cde} - at end of phrase, will limit all blanks (restricted or not) to c, d, or e. ^ operator works as well.
+     (^cde) - Soft Filter that removes c, d, and e (instead of limiting to c, d, or e)
+     {cde} - Hard Filter - at end of phrase, will limit all blanks (restricted or not) to c, d, or e.
         - _{cde} will match c, d, or e
         - [abc]{cde} will match only c
         - [^abc]{cde} will match d or e
+        - [^]{cde} will match c, d, or e
+     {^cde} - Hard Filter that removes c, d, and e (instead of limiting to c, d, or e)
+
+     Coming soon:
+     [abc/defg/hi] - matches "abc", "defg", or "hi"
 
  Word Jumble: Creates anagrams for a "word jumble" game. Adjust game settings in code.
  - JUMBLE_LEN: number of words in the jumble

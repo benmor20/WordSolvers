@@ -17,9 +17,9 @@ public class CrosswordSolver {
 		for (int index = 0; index < unknown.length(); index++) {
 			char c = unknown.charAt(index);
 			if (c == '_') {
-				spaces.add(new BlankSpace(true)); // will auto initialize to all characters. Note that using addLetter on this will remove it
+				spaces.add(new BlankSpace(false));
 			} else if (c >= 'a' && c <= 'z') {
-				spaces.add(new BlankSpace(c));
+				spaces.add(new BlankSpace(false, c));
 			} else if (c == '[') {
 				// Get substring of inside of bracket
 				int startIndex = index + 1, endIndex = startIndex;
@@ -84,11 +84,11 @@ public class CrosswordSolver {
 					}
 
 					if (innerIndex < inner.length()) {
-						BlankSpace blank = new BlankSpace(min, max, negated);
+						BlankSpace blank = new BlankSpace(true, min, max, negated);
 						c = inner.charAt(innerIndex);
 						if (c >= 'a' && c <= 'z') {
 							for (; c >= 'a' && c <= 'z'; innerIndex++, c = inner.charAt(innerIndex)) {
-								blank.addLetter(c);
+								blank.appendLetter(c);
 								if (innerIndex == inner.length() - 1) {
 									break;
 								}
@@ -98,14 +98,38 @@ public class CrosswordSolver {
 							throw new IllegalArgumentException("Unexpected character: " + c + " (index " + (index + innerIndex + 1) + ").");
 						}
 					} else { // ^ ends brackets
-						spaces.add(new BlankSpace(min, max, true));
+						spaces.add(new BlankSpace(true, min, max, true));
 					}
 				} else { // Only bounds given
-					spaces.add(new BlankSpace(min, max, true)); // negated is true to default to all characters
+					spaces.add(new BlankSpace(true, min, max, false, allCharacterSet()));
 				}
 				index += inner.length() + 1; // Skip the bracket expression
+			} else if (c == '{') {
+				// Apply filter
+				Collection<Character> filter = getFilter(unknown, index);
+				for (BlankSpace space : spaces) {
+					space.applyFilter(true, filter);
+				}
+
+				// Can only make it this far if at end of input
+				break;
+			} else if (c == '(') {
+				// Apply filter
+				Collection<Character> filter = getFilter(unknown, index);
+				for (BlankSpace space : spaces) {
+					space.applyFilter(false, filter);
+				}
+
+				// Can only make it this far if at end of input
+				break;
 			} else {
 				throw new IllegalArgumentException("Unexpected character: " + c + " (index " + index + ").");
+			}
+		}
+
+		for (int space = 0; space < spaces.size(); space++) {
+			if (spaces.get(space).possibleCharacters.size() == 0) {
+				throw new IllegalArgumentException("Filter clears all possibilities from space " + (space + 1));
 			}
 		}
 
@@ -120,6 +144,51 @@ public class CrosswordSolver {
 				System.out.println(word);
 			}
 		}
+	}
+
+	private static Collection<Character> getFilter(String unknown, int start) {
+		// Get substring of inside of bracket
+		int startIndex = start + 1, endIndex = startIndex;
+		char endChar = unknown.charAt(start) == '{' ? '}' : ')';
+		for (char c = unknown.charAt(endIndex); c != endChar; endIndex++, c = unknown.charAt(endIndex)) {
+			if (endIndex == unknown.length() - 1) {
+				throw new IllegalArgumentException("No closing brackets for bracket at index " + start + ".");
+			}
+		}
+
+		// Ensure the filter ends the input
+		if (endIndex < unknown.length() - 1) {
+			throw new IllegalArgumentException("Symbols found after filter: " + unknown.substring(endIndex + 1));
+		}
+
+		String inner = unknown.substring(startIndex, endIndex);
+		if (inner.length() == 0) throw new IllegalArgumentException("Empty filter (index: " + start + ")");
+
+		// Check if filter is negated. If it is, cut '^' from inner
+		boolean negated = false;
+		if (inner.charAt(0) == '^') {
+			negated = true;
+			inner = inner.substring(1);
+		}
+
+		// Determine filter
+		Set<Character> filter = new HashSet<>();
+		for (int innerIndex = 0; innerIndex < inner.length(); innerIndex++) {
+			char f = inner.charAt(innerIndex);
+			if (f < 'a' || f > 'z') {
+				throw new IllegalArgumentException("Unexpected character: " + f + " (index: " + (start + innerIndex + 1) + ")");
+			}
+			filter.add(f);
+		}
+
+		// Negate if necessary
+		if (negated) {
+			Set<Character> temp = allCharacterSet();
+			temp.removeAll(filter);
+			filter = temp;
+		}
+
+		return filter;
 	}
 
 	private static Collection<String> possibleWords(List<BlankSpace> letters, DictionaryNode currentNode) {
@@ -179,35 +248,66 @@ public class CrosswordSolver {
 		// How many blanks this space can represent
 		public final int minBlanks, maxBlanks;
 
-		// Whether, when adding characters, to subtract from possibleCharacters (true) or to add (false)
+		// Whether, when appending characters, to subtract from possibleCharacters (true) or to add (false)
 		// Equivalently, whether there is a ^ operator
 		private final boolean negated;
 
-		public BlankSpace(int minBlanks, int maxBlanks, boolean negated) {
+		// Whether this space was given as brackets ('a' vs '[a]', or '_' vs '[^]' or '[abc...xyz]'), which matters for filters)
+		private final boolean bracketed;
+
+		public BlankSpace(boolean bracketed, int minBlanks, int maxBlanks, boolean negated, Collection<Character> cs) {
+			this(bracketed, minBlanks, maxBlanks, negated);
+			this.appendAll(cs);
+		}
+		public BlankSpace(boolean bracketed, int minBlanks, int maxBlanks, boolean negated, char c) {
+			this(bracketed, minBlanks, maxBlanks, negated);
+			this.appendLetter(c);
+		}
+		public BlankSpace(boolean bracketed, int minBlanks, int maxBlanks, boolean negated) {
 			this.possibleCharacters = negated ? allCharacterSet() : new HashSet<>();
 			this.removedCharacters = new HashSet<>();
 			this.minBlanks = minBlanks;
 			this.maxBlanks = maxBlanks;
 			this.negated = negated;
+			this.bracketed = bracketed;
 		}
-		public BlankSpace(int minBlanks, int maxBlanks) {
-			this(minBlanks, maxBlanks, false);
+		public BlankSpace(boolean bracketed, int minBlanks, int maxBlanks, Collection<Character> cs) {
+			this(bracketed, minBlanks, maxBlanks);
+			this.appendAll(cs);
 		}
-		public BlankSpace(boolean negated) {
-			this(1, 1, negated);
+		public BlankSpace(boolean bracketed, int minBlanks, int maxBlanks, char c) {
+			this(bracketed, minBlanks, maxBlanks);
+			this.appendLetter(c);
 		}
-		public BlankSpace(char c) {
-			this();
-			this.addLetter(c);
+		public BlankSpace(boolean bracketed, int minBlanks, int maxBlanks) {
+			this(bracketed, minBlanks, maxBlanks, false);
 		}
-		public BlankSpace() {
-			this(false);
+		public BlankSpace(boolean bracketed, boolean negated, Collection<Character> cs) {
+			this(negated, bracketed);
+			this.appendAll(cs);
+		}
+		public BlankSpace(boolean bracketed, boolean negated, char c) {
+			this(negated, bracketed);
+			this.appendLetter(c);
+		}
+		public BlankSpace(boolean bracketed, boolean negated) {
+			this(bracketed, 1, 1, negated);
+		}
+		public BlankSpace(boolean bracketed, char c) {
+			this(bracketed, false);
+			this.appendLetter(c);
+		}
+		public BlankSpace(boolean bracketed) {
+			this(bracketed, false);
+			if (!this.bracketed) { // Not bracketed with no specified character means '_'
+				this.addAll(allCharacterSet());
+			}
 		}
 
 		// Returns a BlankSpace with one less blank
 		public BlankSpace subtractBlank() {
 			if (this.minBlanks == 0 && this.maxBlanks == 0) throw new IllegalStateException("Cannot subtract BlankSpace with no spaces");
-			BlankSpace ret = new BlankSpace((int)Math.max(this.minBlanks - 1, 0), this.maxBlanks - 1, this.negated);
+			BlankSpace ret = new BlankSpace(this.bracketed, (int)Math.max(this.minBlanks - 1, 0), this.maxBlanks - 1, this.negated);
 			if (this.negated) {
 				ret.possibleCharacters.removeAll(this.removedCharacters);
 				ret.removedCharacters.addAll(this.removedCharacters);
@@ -218,12 +318,53 @@ public class CrosswordSolver {
 		}
 
 		// Adds or subtracts the given character from the range of possibilities, depending on negation
-		public void addLetter(char c) {
+		public void appendLetter(char c) {
 			if (this.negated) {
-				this.possibleCharacters.remove(c);
-				this.removedCharacters.add(c);
+				this.removeLetter(c);
+			} else {
+				this.addLetter(c);
 			}
-			else this.possibleCharacters.add(c);
+		}
+		// Repeats appendLetter(c) for each element of cs
+		public void appendAll(Collection<Character> cs) {
+			if (this.negated) {
+				this.removeAll(cs);
+			} else {
+				this.addAll(cs);
+			}
+		}
+
+		// Add c to the list of possible characters
+		public void addLetter(char c) {
+			this.removedCharacters.remove(c);
+			this.possibleCharacters.add(c);
+		}
+		// Repeats addLetter(c) for each element of cs
+		public void addAll(Collection<Character> cs) {
+			this.removedCharacters.removeAll(cs);
+			this.possibleCharacters.addAll(cs);
+		}
+
+		// Remove c from the list of possible characters
+		public void removeLetter(char c) {
+			this.possibleCharacters.remove(c);
+			this.removedCharacters.add(c);
+		}
+		// Repeats removeLetter(c) for each element of cs
+		public void removeAll(Collection<Character> cs) {
+			this.possibleCharacters.removeAll(cs);
+			this.removedCharacters.addAll(cs);
+		}
+
+		// Applies a filter over all the letters
+		public void applyFilter(boolean hardFilter, Collection<Character> filter) {
+			// See README for the filter rules
+			if ((hardFilter && (this.bracketed || this.possibleCharacters.size() > 1))
+					|| (!hardFilter && !this.bracketed && this.possibleCharacters.size() > 1)) {
+				Set<Character> toRemove = allCharacterSet();
+				toRemove.removeAll(filter);
+				this.removeAll(toRemove);
+			}
 		}
 
 		// Returns whether this BlankSpace can represent a variable number of blanks (i.e. '[2,5]')
@@ -239,6 +380,11 @@ public class CrosswordSolver {
 		// Returns whether this is a single space (i.e. 'a', '_', or '[1,1]')
 		public boolean isSingular() {
 			return this.minBlanks == 1 && this.maxBlanks == 1;
+		}
+
+		// Returns whether this blank can represent all characters
+		public boolean isAllCharacters() {
+			return this.possibleCharacters.equals(allCharacterSet());
 		}
 
 		// For testing purposes
