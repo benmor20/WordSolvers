@@ -36,6 +36,7 @@
         - [^abc]{cde} will match d or e
         - [^]{cde} will match c, d, or e
      {^cde} - Hard Filter that removes c, d, and e (instead of limiting to c, d, or e)
+     (2,5) or {2,5} - limit on word length for variable length words (combines with hard/soft filters)
 
      Coming soon:
      [abc/defg/hi] - matches "abc", "defg", or "hi"

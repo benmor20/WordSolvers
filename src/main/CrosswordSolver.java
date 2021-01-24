@@ -14,6 +14,7 @@ public class CrosswordSolver {
 
 		// Create list of all possibilities for each position
 		List<BlankSpace> spaces = new ArrayList<>();
+		int minLength = 0, maxLength = Integer.MAX_VALUE;
 		for (int index = 0; index < unknown.length(); index++) {
 			char c = unknown.charAt(index);
 			if (c == '_') {
@@ -21,107 +22,38 @@ public class CrosswordSolver {
 			} else if (c >= 'a' && c <= 'z') {
 				spaces.add(new BlankSpace(false, c));
 			} else if (c == '[') {
-				// Get substring of inside of bracket
-				int startIndex = index + 1, endIndex = startIndex;
-				for (c = unknown.charAt(endIndex); c != ']'; endIndex++, c = unknown.charAt(endIndex)) {
-					if (endIndex == unknown.length() - 1) {
-						throw new IllegalArgumentException("No closing brackets for bracket at index " + index + ".");
-					}
-				}
-				String inner = unknown.substring(startIndex, endIndex);
-
-				// If nothing inside brackets, throw exception
-				if (inner.length() == 0) throw new IllegalArgumentException("Empty brackets (index " + index + ").");
-
-				int innerIndex = 0;
-				c = inner.charAt(innerIndex);
-				int min = 1, max = 1; // Default bounds
-				if (c >= '0' && c <= '9') { // Set minumum bounds
-					min = 0;
-					for (; c >= '0' && c <= '9'; innerIndex++, c = inner.charAt(innerIndex)) {
-						min *= 10;
-						min += c - '0';
-						if (innerIndex == inner.length() - 1) {
-							throw new IllegalArgumentException("Missing comma at index " + (index + innerIndex + 1) + ".");
-						}
-					}
-					if (c != ',') throw new IllegalArgumentException("Missing comma at index " + (index + innerIndex + 1) + ".");
-				}
-				if (c == ',') { // Either has just min, just max, or both
-					// No minimum bound (did not go into previous if statement)
-					if (innerIndex == 0) {
-						min = 0;
-					}
-
-					// Skip comma
-					innerIndex++;
-					if (innerIndex < inner.length()) {
-						c = inner.charAt(innerIndex);
-
-						if (c >= '0' && c <= '9') { // Set maximum bounds
-							max = 0;
-							for (; c >= '0' && c <= '9'; innerIndex++, c = inner.charAt(innerIndex)) {
-								max *= 10;
-								max += c - '0';
-								if (innerIndex == inner.length() - 1) {
-									innerIndex++;
-									break;
-								}
-							}
-						} else { // No maximum
-							max = Integer.MAX_VALUE;
-						}
-					} else { // No maximum or limits
-						max = Integer.MAX_VALUE;
-					}
-				}
-
-				if (innerIndex < inner.length()) { // Letter limits given
-					boolean negated = false;
-					if (c == '^') { // One space, find negation
-						negated = true;
-						innerIndex++;
-					}
-
-					if (innerIndex < inner.length()) {
-						BlankSpace blank = new BlankSpace(true, min, max, negated);
-						c = inner.charAt(innerIndex);
-						if (c >= 'a' && c <= 'z') {
-							for (; c >= 'a' && c <= 'z'; innerIndex++, c = inner.charAt(innerIndex)) {
-								blank.appendLetter(c);
-								if (innerIndex == inner.length() - 1) {
-									break;
-								}
-							}
-							spaces.add(blank);
-						} else {
-							throw new IllegalArgumentException("Unexpected character: " + c + " (index " + (index + innerIndex + 1) + ").");
-						}
-					} else { // ^ ends brackets
-						spaces.add(new BlankSpace(true, min, max, true));
-					}
-				} else { // Only bounds given
-					spaces.add(new BlankSpace(true, min, max, false, allCharacterSet()));
-				}
-				index += inner.length() + 1; // Skip the bracket expression
+				spaces.add(getBracket(unknown, index));
+				index = getClosingBracketIndex(unknown, index);
 			} else if (c == '{') {
 				// Apply filter
-				Collection<Character> filter = getFilter(unknown, index);
+				BlankSpace filter = getBracket(unknown, index);
 				for (BlankSpace space : spaces) {
-					space.applyFilter(true, filter);
+					space.applyFilter(true, filter.possibleCharacters);
 				}
+				minLength = filter.minBlanks;
+				maxLength = filter.maxBlanks;
 
 				// Can only make it this far if at end of input
-				break;
+				int endIndex = getClosingBracketIndex(unknown, index);
+				if (endIndex < unknown.length() - 1) {
+					throw new IllegalArgumentException("Symbols found after filter: " + unknown.substring(endIndex + 1));
+				}
+				break; // if above is true, have searched full input
 			} else if (c == '(') {
 				// Apply filter
-				Collection<Character> filter = getFilter(unknown, index);
+				BlankSpace filter = getBracket(unknown, index);
 				for (BlankSpace space : spaces) {
-					space.applyFilter(false, filter);
+					space.applyFilter(false, filter.possibleCharacters);
 				}
+				minLength = filter.minBlanks;
+				maxLength = filter.maxBlanks;
 
 				// Can only make it this far if at end of input
-				break;
+				int endIndex = getClosingBracketIndex(unknown, index);
+				if (endIndex < unknown.length() - 1) {
+					throw new IllegalArgumentException("Symbols found after filter: " + unknown.substring(endIndex + 1));
+				}
+				break; // if above is true, have searched full input
 			} else {
 				throw new IllegalArgumentException("Unexpected character: " + c + " (index " + index + ").");
 			}
@@ -134,7 +66,7 @@ public class CrosswordSolver {
 		}
 
 		// Find possible words
-		Collection<String> words = possibleWords(spaces, WordUtils.getDictTree());
+		Collection<String> words = possibleWords(spaces, WordUtils.getDictTree(), minLength, maxLength);
 
 		// Print out possibilities
 		if (words.size() == 0) {
@@ -146,53 +78,115 @@ public class CrosswordSolver {
 		}
 	}
 
-	private static Collection<Character> getFilter(String unknown, int start) {
+	private static BlankSpace getBracket(String unknown, int start) {
+		// Get inside bracket
+		String inner = unknown.substring(start + 1, getClosingBracketIndex(unknown, start));
+
+		// If nothing inside brackets, throw exception
+		if (inner.length() == 0) throw new IllegalArgumentException("Empty brackets (index " + start + ").");
+
+		int innerIndex = 0;
+		char c = inner.charAt(innerIndex);
+		int min = 1, max = 1; // Default bounds
+		if (c >= '0' && c <= '9') { // Set minumum bounds
+			min = 0;
+			for (; c >= '0' && c <= '9'; innerIndex++, c = inner.charAt(innerIndex)) {
+				min *= 10;
+				min += c - '0';
+				if (innerIndex == inner.length() - 1) {
+					throw new IllegalArgumentException("Missing comma at index " + (start + innerIndex + 1) + ".");
+				}
+			}
+			if (c != ',') throw new IllegalArgumentException("Missing comma at index " + (start + innerIndex + 1) + ".");
+		}
+		if (c == ',') { // Either has just min, just max, or both
+			// No minimum bound (did not go into previous if statement)
+			if (innerIndex == 0) {
+				min = 0;
+			}
+
+			// Skip comma
+			innerIndex++;
+			if (innerIndex < inner.length()) {
+				c = inner.charAt(innerIndex);
+
+				if (c >= '0' && c <= '9') { // Set maximum bounds
+					max = 0;
+					for (; c >= '0' && c <= '9'; innerIndex++, c = inner.charAt(innerIndex)) {
+						max *= 10;
+						max += c - '0';
+						if (innerIndex == inner.length() - 1) {
+							innerIndex++;
+							break;
+						}
+					}
+				} else { // No maximum
+					max = Integer.MAX_VALUE;
+				}
+			} else { // No maximum or limits
+				max = Integer.MAX_VALUE;
+			}
+		}
+
+		if (min > max) throw new IllegalArgumentException("Lower bound cannot be more than upper bound (min: " + min + " max: " + max + "index: " + start + ")");
+
+		if (innerIndex < inner.length()) { // Letter limits given
+			boolean negated = false;
+			if (c == '^') { // One space, find negation
+				negated = true;
+				innerIndex++;
+			}
+
+			if (innerIndex < inner.length()) {
+				BlankSpace ret = new BlankSpace(true, min, max, negated);
+				c = inner.charAt(innerIndex);
+				if (c >= 'a' && c <= 'z') {
+					for (; c >= 'a' && c <= 'z'; innerIndex++, c = inner.charAt(innerIndex)) {
+						ret.appendLetter(c);
+						if (innerIndex == inner.length() - 1) {
+							break;
+						}
+					}
+				} else {
+					throw new IllegalArgumentException("Unexpected character: " + c + " (index " + (start + innerIndex + 1) + ").");
+				}
+				return ret;
+			} else { // ^ ends brackets
+				return new BlankSpace(true, min, max, true);
+			}
+		} else { // Only bounds given
+			return new BlankSpace(true, min, max, false, allCharacterSet());
+		}
+	}
+
+	private static int getClosingBracketIndex(String unknown, int start) {
+		// Determine bracket type
+		char c = unknown.charAt(start);
+		boolean filter = c == '{' || c == '(';
+		char endBracket = c == '{' ? '}' : (c == '(' ? ')' : ']');
+
+		if (endBracket == ']' && c != '[') {
+			throw new IllegalArgumentException("Given index (" + start + ") is not a bracket");
+		}
+
 		// Get substring of inside of bracket
 		int startIndex = start + 1, endIndex = startIndex;
-		char endChar = unknown.charAt(start) == '{' ? '}' : ')';
-		for (char c = unknown.charAt(endIndex); c != endChar; endIndex++, c = unknown.charAt(endIndex)) {
+		for (c = unknown.charAt(endIndex); c != endBracket; endIndex++, c = unknown.charAt(endIndex)) {
 			if (endIndex == unknown.length() - 1) {
 				throw new IllegalArgumentException("No closing brackets for bracket at index " + start + ".");
 			}
 		}
-
-		// Ensure the filter ends the input
-		if (endIndex < unknown.length() - 1) {
-			throw new IllegalArgumentException("Symbols found after filter: " + unknown.substring(endIndex + 1));
-		}
-
-		String inner = unknown.substring(startIndex, endIndex);
-		if (inner.length() == 0) throw new IllegalArgumentException("Empty filter (index: " + start + ")");
-
-		// Check if filter is negated. If it is, cut '^' from inner
-		boolean negated = false;
-		if (inner.charAt(0) == '^') {
-			negated = true;
-			inner = inner.substring(1);
-		}
-
-		// Determine filter
-		Set<Character> filter = new HashSet<>();
-		for (int innerIndex = 0; innerIndex < inner.length(); innerIndex++) {
-			char f = inner.charAt(innerIndex);
-			if (f < 'a' || f > 'z') {
-				throw new IllegalArgumentException("Unexpected character: " + f + " (index: " + (start + innerIndex + 1) + ")");
-			}
-			filter.add(f);
-		}
-
-		// Negate if necessary
-		if (negated) {
-			Set<Character> temp = allCharacterSet();
-			temp.removeAll(filter);
-			filter = temp;
-		}
-
-		return filter;
+		return endIndex;
 	}
 
-	private static Collection<String> possibleWords(List<BlankSpace> letters, DictionaryNode currentNode) {
+	private static Collection<String> possibleWords(List<BlankSpace> letters, DictionaryNode currentNode, int minLetters, int maxLetters) {
 		Collection<String> ret = new LinkedHashSet<>(); // Preserve order (roughly alphabetical) but prevent repeats
+
+		// Ensure bounds are kept
+		int len = currentNode.length();
+		int[] bounds = getLengthBounds(letters);
+		int minLen = len + bounds[0], maxLen = len + bounds[1];
+		if (minLen > maxLetters || maxLen < minLetters) return ret;
 
 		// If no more letters, return list containing current word, or empty list if currentNode is not a word
 		if (letters.size() == 0) {
@@ -206,9 +200,9 @@ public class CrosswordSolver {
 
 		// If the minimum is 0, add all the possibilities with the current completely skipped
 		if (currentSpace.minBlanks == 0) {
-			ret.addAll(possibleWords(skipFirst, currentNode));
+			ret.addAll(possibleWords(skipFirst, currentNode, minLetters, maxLetters));
 		}
-		// If the max is also 0, return, otherwise, continue
+		// If the max is also 0, return; otherwise, continue
 		if (currentSpace.maxBlanks == 0) {
 			return ret;
 		}
@@ -221,11 +215,21 @@ public class CrosswordSolver {
 		// Look the next character down the tree. If exists, go there and recurse with one less space in current node
 		for (char c : currentSpace.possibleCharacters) {
 			if (currentNode.hasChild(c)) {
-				ret.addAll(possibleWords(newLetters, currentNode.getChild(c)));
+				ret.addAll(possibleWords(newLetters, currentNode.getChild(c), minLetters, maxLetters));
 			}
 		}
 
 		return ret;
+	}
+
+	// Returns a 2 element array containing the minimum and maximum word length
+	private static int[] getLengthBounds(List<BlankSpace> spaces) {
+		int min = 0, max = 0;
+		for (BlankSpace space : spaces) {
+			min += space.minBlanks;
+			max += space.maxBlanks;
+		}
+		return new int[] { min, max };
 	}
 
 	// Returns a list containing each letter from a to z
