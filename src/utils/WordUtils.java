@@ -33,7 +33,7 @@ public class WordUtils {
 
 			BufferedReader dictReader = new BufferedReader(new FileReader(dictPath));
 			while ((line = dictReader.readLine()) != null) {
-				dictionary.add(line);
+				dictionary.add(line.toLowerCase());
 			}
 			dictReader.close();
 
