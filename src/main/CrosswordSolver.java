@@ -179,7 +179,7 @@ public class CrosswordSolver {
 		}
 		return endIndex;
 	}
-	
+
 	private static Collection<String> possibleWords(List<BlankSpace> letters, DictionaryNode currentNode, int minLetters, int maxLetters) {
 		Collection<String> ret = new LinkedHashSet<>(); // Preserve order (roughly alphabetical) but prevent repeats
 
@@ -188,7 +188,6 @@ public class CrosswordSolver {
 		int[] bounds = getLengthBounds(letters);
 		int minLen = len + bounds[0], maxLen = addWithOverflow(len, bounds[1]);
 		if (minLen > maxLetters || maxLen < minLetters) {
-			System.out.println("Not possible to stay in bounds (minlen: " + minLen + " maxlen: " + maxLen + ". Returning.");
 			return ret;
 		}
 
