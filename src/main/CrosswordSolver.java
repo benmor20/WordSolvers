@@ -87,7 +87,8 @@ public class CrosswordSolver {
 
 		int innerIndex = 0;
 		char c = inner.charAt(innerIndex);
-		int min = 1, max = 1; // Default bounds
+		boolean isFilter = unknown.charAt(start) != '['; // Must be '(' or '{' - getClosingBracket would have thrown an exception otherwise
+		int min = 1, max = isFilter ? Integer.MAX_VALUE : 1; // Default bounds - (1,MAX) if filter, (1,1) if not
 		if (c >= '0' && c <= '9') { // Set minumum bounds
 			min = 0;
 			for (; c >= '0' && c <= '9'; innerIndex++, c = inner.charAt(innerIndex)) {
@@ -178,15 +179,18 @@ public class CrosswordSolver {
 		}
 		return endIndex;
 	}
-
+	
 	private static Collection<String> possibleWords(List<BlankSpace> letters, DictionaryNode currentNode, int minLetters, int maxLetters) {
 		Collection<String> ret = new LinkedHashSet<>(); // Preserve order (roughly alphabetical) but prevent repeats
 
 		// Ensure bounds are kept
 		int len = currentNode.length();
 		int[] bounds = getLengthBounds(letters);
-		int minLen = len + bounds[0], maxLen = len + bounds[1];
-		if (minLen > maxLetters || maxLen < minLetters) return ret;
+		int minLen = len + bounds[0], maxLen = addWithOverflow(len, bounds[1]);
+		if (minLen > maxLetters || maxLen < minLetters) {
+			System.out.println("Not possible to stay in bounds (minlen: " + minLen + " maxlen: " + maxLen + ". Returning.");
+			return ret;
+		}
 
 		// If no more letters, return list containing current word, or empty list if currentNode is not a word
 		if (letters.size() == 0) {
@@ -227,9 +231,15 @@ public class CrosswordSolver {
 		int min = 0, max = 0;
 		for (BlankSpace space : spaces) {
 			min += space.minBlanks;
-			max += space.maxBlanks;
+			max = addWithOverflow(max, space.maxBlanks);
 		}
 		return new int[] { min, max };
+	}
+
+	private static int addWithOverflow(int a, int b) {
+		long sum = ((long) a) + ((long) b);
+		if (sum > (long)Integer.MAX_VALUE) return Integer.MAX_VALUE;
+		return (int)sum;
 	}
 
 	// Returns a list containing each letter from a to z
