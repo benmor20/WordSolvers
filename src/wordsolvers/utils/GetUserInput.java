@@ -1,4 +1,4 @@
-package utils;
+package wordsolvers.utils;
 
 import java.util.Collection;
 import java.util.Scanner;

@@ -1,9 +1,8 @@
-package main;
+package wordsolvers.main;
 
-import utils.DictionaryNode;
-import utils.GetUserInput;
-import utils.Utils;
-import utils.WordUtils;
+import wordsolvers.utils.DictionaryNode;
+import wordsolvers.utils.GetUserInput;
+import wordsolvers.utils.WordUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -138,9 +137,9 @@ public class WordSearchSolver {
 							int rowOffset = scales[0] == 0 ? Integer.MAX_VALUE : (row - wordInfo.startRow) / scales[0],
 									colOffset = scales[1] == 0 ? Integer.MAX_VALUE : (col - wordInfo.startCol) / scales[1];
 							if (rowOffset == Integer.MAX_VALUE) { // Horizontal
-								capitalize = row == wordInfo.startRow && Utils.isBetween(col, wordInfo.startCol, maxCol, true);
+								capitalize = row == wordInfo.startRow && WordUtils.isBetween(col, wordInfo.startCol, maxCol, true);
 							} else if (colOffset == Integer.MAX_VALUE) { // Vertical
-								capitalize = col == wordInfo.startCol && Utils.isBetween(row, wordInfo.startRow, maxRow, true);
+								capitalize = col == wordInfo.startCol && WordUtils.isBetween(row, wordInfo.startRow, maxRow, true);
 							} else { // Diagonal
 								capitalize = rowOffset == colOffset && rowOffset >= 0 && rowOffset < len;
 							}

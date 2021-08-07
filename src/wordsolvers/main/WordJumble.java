@@ -1,6 +1,6 @@
-package main;
+package wordsolvers.main;
 
-import utils.WordUtils;
+import wordsolvers.utils.WordUtils;
 
 import java.util.*;
 

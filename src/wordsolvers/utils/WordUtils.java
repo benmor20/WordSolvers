@@ -1,12 +1,9 @@
-package utils;
+package wordsolvers.utils;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class WordUtils {
 	public static List<String> dictionary;
@@ -125,5 +122,19 @@ public class WordUtils {
 			else currentNode.addChild(last, true);
 		}
 		return topNode;
+	}
+
+	public static boolean isBetween(int value, int side1, int side2, boolean inclusive) {
+		return inclusive ? (value >= side1 && value <= side2) || (value <= side1 && value >= side2)
+				: (value > side1 && value < side2) || (value < side1 && value > side2);
+	}
+
+	// Returns a list containing each letter from a to z
+	public static Set<Character> allCharacterSet() {
+		return new HashSet<>() {{
+			for (char c = 'a'; c <= 'z'; c++) {
+				this.add(c);
+			}
+		}};
 	}
 }

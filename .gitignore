@@ -27,4 +27,4 @@ out/
 .idea/
 
 #Personal
-src/main/Testing.java
+src/wordsolvers/main/Testing.java

@@ -1,7 +1,7 @@
-package main;
+package wordsolvers.main;
 
-import utils.GetUserInput;
-import utils.WordUtils;
+import wordsolvers.utils.GetUserInput;
+import wordsolvers.utils.WordUtils;
 
 import java.util.*;
 
