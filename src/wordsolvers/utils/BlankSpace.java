@@ -4,7 +4,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-public class BlankSpace {
+public class BlankSpace implements Cloneable {
     // Possible characters for this blank space
     public final Set<Character> possibleCharacters;
 
@@ -73,13 +73,8 @@ public class BlankSpace {
     // Returns a BlankSpace with one less blank
     public BlankSpace subtractBlank() {
         if (this.minBlanks == 0 && this.maxBlanks == 0) throw new IllegalStateException("Cannot subtract BlankSpace with no spaces");
-        BlankSpace ret = new BlankSpace(this.bracketed, (int)Math.max(this.minBlanks - 1, 0), this.maxBlanks - 1, this.negated);
-        if (this.negated) {
-            ret.possibleCharacters.removeAll(this.removedCharacters);
-            ret.removedCharacters.addAll(this.removedCharacters);
-        } else {
-            ret.possibleCharacters.addAll(this.possibleCharacters);
-        }
+        BlankSpace ret = new BlankSpace(this.bracketed, Math.max(this.minBlanks - 1, 0), this.maxBlanks - 1, this.negated);
+        copyCharacters(this, ret);
         return ret;
     }
 
@@ -123,13 +118,25 @@ public class BlankSpace {
     }
 
     // Applies a filter over all the letters
-    public void applyFilter(boolean hardFilter, Collection<Character> filter) {
+    public void applyFilter(Collection<Character> filter, boolean hardFilter) {
+        applyFilterTo(this, filter, hardFilter);
+    }
+
+    // Returns a BlankSpace with the given filter applied
+    public BlankSpace withFilter(Collection<Character> filter, boolean hardFilter) {
+        BlankSpace ret = new BlankSpace(this.bracketed, this.minBlanks, this.maxBlanks, this.negated);
+        applyFilterTo(ret, filter, hardFilter);
+        return ret;
+    }
+
+    // Applies the given filter to the given BlankSpace
+    private static void applyFilterTo(BlankSpace space, Collection<Character> filter, boolean hardFilter) {
         // See README for the filter rules
-        if ((hardFilter && (this.bracketed || this.possibleCharacters.size() > 1))
-                || (!hardFilter && !this.bracketed && this.possibleCharacters.size() > 1)) {
+        if ((hardFilter && (space.bracketed || space.possibleCharacters.size() > 1))
+                || (!hardFilter && !space.bracketed && space.possibleCharacters.size() > 1)) {
             Set<Character> toRemove = WordUtils.allCharacterSet();
             toRemove.removeAll(filter);
-            this.removeAll(toRemove);
+            space.removeAll(toRemove);
         }
     }
 
@@ -153,9 +160,19 @@ public class BlankSpace {
         return this.possibleCharacters.equals(WordUtils.allCharacterSet());
     }
 
-    // For testing purposes
+    // Returns whether this blank is bracketed
+    public boolean isBracketed() {
+        return this.bracketed;
+    }
+
     @Override
     public String toString() {
+        if (!this.bracketed && !this.negated && this.possibleCharacters.size() == 1) {
+            return this.possibleCharacters.toArray()[0].toString();
+        }
+        if (!this.bracketed && !this.negated && this.possibleCharacters.size() == 26) {
+            return "_";
+        }
         StringBuilder charStr = new StringBuilder();
         if (this.negated) {
             charStr.append('^');
@@ -172,5 +189,34 @@ public class BlankSpace {
             }
         }
         return "[" + this.minBlanks + "," + this.maxBlanks + charStr.toString() + "]";
+    }
+
+    @Override
+    public BlankSpace clone() {
+        BlankSpace clone = new BlankSpace(this.bracketed, this.minBlanks, this.maxBlanks, this.negated);
+        copyCharacters(this, clone);
+        return clone;
+    }
+
+    private static void copyCharacters(BlankSpace from, BlankSpace to) {
+        to.possibleCharacters.clear();
+        to.removedCharacters.clear();
+        if (from.negated) {
+            if (to.negated) {
+                to.possibleCharacters.addAll(WordUtils.allCharacterSet());
+                to.possibleCharacters.removeAll(from.removedCharacters);
+                to.removedCharacters.addAll(from.removedCharacters);
+            } else {
+                to.possibleCharacters.addAll(from.removedCharacters);
+            }
+        } else {
+            if (to.negated) {
+                to.possibleCharacters.addAll(WordUtils.allCharacterSet());
+                to.possibleCharacters.removeAll(from.possibleCharacters);
+                to.removedCharacters.addAll(from.possibleCharacters);
+            } else {
+                to.possibleCharacters.addAll(from.possibleCharacters);
+            }
+        }
     }
 }

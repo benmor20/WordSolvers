@@ -29,7 +29,7 @@ public class CrosswordSolver {
 				// Apply filter
 				BlankSpace filter = getBracket(unknown, index);
 				for (BlankSpace space : spaces) {
-					space.applyFilter(true, filter.possibleCharacters);
+					space.applyFilter(filter.possibleCharacters, true);
 				}
 				minLength = filter.minBlanks;
 				maxLength = filter.maxBlanks;
@@ -44,7 +44,7 @@ public class CrosswordSolver {
 				// Apply filter
 				BlankSpace filter = getBracket(unknown, index);
 				for (BlankSpace space : spaces) {
-					space.applyFilter(false, filter.possibleCharacters);
+					space.applyFilter(filter.possibleCharacters, false);
 				}
 				minLength = filter.minBlanks;
 				maxLength = filter.maxBlanks;
