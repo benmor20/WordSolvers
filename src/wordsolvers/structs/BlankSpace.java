@@ -1,4 +1,6 @@
-package wordsolvers.utils;
+package wordsolvers.structs;
+
+import wordsolvers.utils.WordUtils;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -65,9 +67,8 @@ public class BlankSpace implements Cloneable {
     }
     public BlankSpace(boolean bracketed) {
         this(bracketed, false);
-        if (!this.bracketed) { // Not bracketed with no specified character means '_'
-            this.addAll(WordUtils.allCharacterSet());
-        }
+        // If no letters specified and not negated, all letters allowed
+        this.addAll(WordUtils.allCharacterSet());
     }
 
     // Returns a BlankSpace with one less blank

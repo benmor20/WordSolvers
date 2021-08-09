@@ -1,6 +1,6 @@
 package wordsolvers.main;
 
-import wordsolvers.utils.DictionaryNode;
+import wordsolvers.structs.DictionaryNode;
 import wordsolvers.utils.GetUserInput;
 import wordsolvers.utils.WordUtils;
 

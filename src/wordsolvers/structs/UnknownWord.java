@@ -1,4 +1,4 @@
-package wordsolvers.utils;
+package wordsolvers.structs;
 
 import java.util.ArrayList;
 import java.util.List;
