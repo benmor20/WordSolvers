@@ -139,4 +139,10 @@ public class WordUtils {
 			}
 		}};
 	}
+
+	public static int addWithOverflow(int a, int b) {
+		long sum = ((long) a) + ((long) b);
+		if (sum > (long)Integer.MAX_VALUE) return Integer.MAX_VALUE;
+		return (int)sum;
+	}
 }

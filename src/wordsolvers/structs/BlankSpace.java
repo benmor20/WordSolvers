@@ -125,7 +125,7 @@ public class BlankSpace implements Cloneable {
 
     // Returns a BlankSpace with the given filter applied
     public BlankSpace withFilter(Collection<Character> filter, boolean hardFilter) {
-        BlankSpace ret = new BlankSpace(this.bracketed, this.minBlanks, this.maxBlanks, this.negated);
+        BlankSpace ret = this.clone();
         applyFilterTo(ret, filter, hardFilter);
         return ret;
     }
@@ -148,7 +148,7 @@ public class BlankSpace implements Cloneable {
 
     // Returns whether this is an empty space (equivalent to '[0,0]')
     public boolean isEmpty() {
-        return this.maxBlanks > 0;
+        return this.maxBlanks == 0;
     }
 
     // Returns whether this is a single space (i.e. 'a', '_', or '[1,1]')
@@ -184,17 +184,33 @@ public class BlankSpace implements Cloneable {
             for (char c : allChars) {
                 charStr.append(c);
             }
-        } else {
+        } else if (!this.isAllCharacters()) {
             for (char c : this.possibleCharacters) {
                 charStr.append(c);
             }
         }
-        return "[" + this.minBlanks + "," + this.maxBlanks + charStr.toString() + "]";
+        if (this.minBlanks == 1 && this.maxBlanks == 1) {
+            return "[" + charStr + "]";
+        }
+        String minStr = this.minBlanks == 0 ? "" : this.minBlanks + "";
+        String maxStr = this.maxBlanks == Integer.MAX_VALUE ? "" : this.maxBlanks + "";
+        return "[" + minStr + "," + maxStr + charStr + "]";
     }
 
     @Override
     public BlankSpace clone() {
         BlankSpace clone = new BlankSpace(this.bracketed, this.minBlanks, this.maxBlanks, this.negated);
+        copyCharacters(this, clone);
+        return clone;
+    }
+
+    public BlankSpace cloneOneLess() {
+        if (this.isEmpty()) {
+            throw new IllegalArgumentException("Cannot create a new BlankSpace with one less blank from a space with no blanks");
+        }
+        int newMin = Math.max(0, this.minBlanks - 1),
+            newMax = this.maxBlanks == Integer.MAX_VALUE ? Integer.MAX_VALUE : this.maxBlanks - 1;
+        BlankSpace clone = new BlankSpace(this.bracketed, newMin, newMax, this.negated);
         copyCharacters(this, clone);
         return clone;
     }

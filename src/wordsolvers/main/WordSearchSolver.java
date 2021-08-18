@@ -94,7 +94,7 @@ public class WordSearchSolver {
 						// Advance step, check if still on tree, or if found word
 						words[direction] = words[direction].getChild(wordSearch[rowCheck][colCheck]);
 						if (words[direction] == null) continue;
-						if ((hasList || words[direction].length() >= MIN_WORD_LENGTH) && words[direction].isWord()) {
+						if ((hasList || words[direction].depth() >= MIN_WORD_LENGTH) && words[direction].isWord()) {
 							foundWords.add(new FoundWordInfo(words[direction].toString(), row, col, direction));
 						}
 					}

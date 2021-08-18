@@ -8,7 +8,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-public class BlankSpaceParser implements Parser<BlankSpace> {
+public class BlankSpaceParser extends Parser<BlankSpace> {
+    public BlankSpaceParser() {
+        super(BlankSpace.class);
+    }
+
     @Override
     public String serialize(BlankSpace obj) {
         return obj.toString();
@@ -32,24 +36,24 @@ public class BlankSpaceParser implements Parser<BlankSpace> {
             if (lett >= 'a' && lett <= 'z') {
                 return new BlankSpace(false, lett);
             }
-            throwParseError(str, "Single-character BlankSpace must be a letter or underscore", 0);
+            this.throwParseError(str, "Single-character BlankSpace must be a letter or underscore", 0);
         }
 
         // If length is > 1, must be bracket
         char bracket = unknown.charAt(0);
         if (bracket != '[' && bracket != '{' && bracket != '(') {
-            throwParseError(str, "Multiple character BlankSpace must start with [, {, or (", 0);
+            this.throwParseError(str, "Multiple character BlankSpace must start with [, {, or (", 0);
         }
         char endBracket = unknown.charAt(str.length() - 1);
         if ((bracket == '[' && endBracket != ']') || (bracket == '{' && endBracket != '}')
                 || (bracket == '(' && endBracket != ')')) {
-            throwParseError(str, "Last character must match the starting bracket", str.length() - 1);
+            this.throwParseError(str, "Last character must match the starting bracket", str.length() - 1);
         }
 
         // Parse inside bracket
         unknown = unknown.substring(1, str.length() - 1);
         if (unknown.length() == 0) {
-            throwParseError(str, "Missing characters inside bracket", 1);
+            this.throwParseError(str, "Missing characters inside bracket", 1);
         }
         int index = 0;
         boolean isFilter = bracket != '[';
@@ -63,7 +67,7 @@ public class BlankSpaceParser implements Parser<BlankSpace> {
                 min *= 10;
                 min += c - '0';
                 if (index == unknown.length() - 1) {
-                    throwParseError(str, "Missing comma", index + 1);
+                    this.throwParseError(str, "Missing comma", index + 1);
                 }
             }
         }
@@ -96,8 +100,8 @@ public class BlankSpaceParser implements Parser<BlankSpace> {
             }
         }
 
-        if (min > max) throwParseError(str, "Lower bound (" + min + ") cannot be more than upper bound (" + max
-                + ")", index + 1);
+        if (min > max) this.throwParseError(str, "Lower bound (" + min + ") cannot be more than upper bound ("
+                + max + ")", index + 1);
 
         if (index < unknown.length()) { // Character limits given
             boolean negated = false;
@@ -117,7 +121,7 @@ public class BlankSpaceParser implements Parser<BlankSpace> {
                         }
                     }
                 }
-                throwParseError(str, "Unexpected character: " + c, index + 1);
+                this.throwParseError(str, "Unexpected character: " + c, index + 1);
             } else { // ^ ends brackets
                 return new BlankSpace(true, min, max, true);
             }
@@ -127,10 +131,5 @@ public class BlankSpaceParser implements Parser<BlankSpace> {
 
         // Unreachable - either throws error or returns before here
         return null;
-    }
-
-    private static void throwParseError(String str, String message, int index) {
-        throw new IllegalArgumentException("Could not parse a BlankSpace from " + str + ": " + message
-                + " (index " + index + ").");
     }
 }

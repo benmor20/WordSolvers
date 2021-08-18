@@ -93,9 +93,9 @@ public class DictionaryNode {
 		return currentNode;
 	}
 
-	public int length() {
+	public int depth() {
 		if (this.parent == null) return 0;
-		return this.parent.length() + 1;
+		return this.parent.depth() + 1;
 	}
 
 	@Override
