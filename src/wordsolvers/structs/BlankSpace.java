@@ -205,11 +205,14 @@ public class BlankSpace implements Cloneable {
     }
 
     public BlankSpace cloneOneLess() {
+        return this.cloneMinusSpace(1, 1);
+    }
+    public BlankSpace cloneMinusSpace(int min, int max) {
         if (this.isEmpty()) {
-            throw new IllegalArgumentException("Cannot create a new BlankSpace with one less blank from a space with no blanks");
+            throw new IllegalArgumentException("Cannot create a new BlankSpace with less blanks than none");
         }
-        int newMin = Math.max(0, this.minBlanks - 1),
-            newMax = this.maxBlanks == Integer.MAX_VALUE ? Integer.MAX_VALUE : this.maxBlanks - 1;
+        int newMin = Math.max(0, this.minBlanks - max),
+                newMax = this.maxBlanks == Integer.MAX_VALUE ? Integer.MAX_VALUE : this.maxBlanks - min;
         BlankSpace clone = new BlankSpace(this.bracketed, newMin, newMax, this.negated);
         copyCharacters(this, clone);
         return clone;

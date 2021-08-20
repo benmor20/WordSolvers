@@ -145,4 +145,14 @@ public class WordUtils {
 		if (sum > (long)Integer.MAX_VALUE) return Integer.MAX_VALUE;
 		return (int)sum;
 	}
+
+	public static <T> List<T> withoutIndex(List<T> list, int index) {
+		List<T> ret = new ArrayList<>();
+		for (int i = 0; i < list.size(); i++) {
+			if (i == index) continue;
+			T ele = list.get(i);
+			ret.add(ele);
+		}
+		return ret;
+	}
 }

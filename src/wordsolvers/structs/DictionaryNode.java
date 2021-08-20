@@ -1,8 +1,6 @@
 package wordsolvers.structs;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class DictionaryNode {
 	private DictionaryNode parent;
@@ -57,6 +55,23 @@ public class DictionaryNode {
 		return currentNode;
 	}
 
+	public Collection<DictionaryNode> getChildrenFrom(BlankSpace space) {
+		Collection<DictionaryNode> ret = new LinkedHashSet<>();
+
+		if (space.minBlanks == 0) {
+			ret.add(this);
+		}
+		if (space.maxBlanks == 0) {
+			return ret;
+		}
+
+		for (char c : space.possibleCharacters) {
+			if (!this.hasChild(c)) continue;
+			ret.addAll(this.getChild(c).getChildrenFrom(space.cloneOneLess()));
+		}
+		return ret;
+	}
+
 	public Set<Map.Entry<Character,DictionaryNode>> getChildren() {
 		return this.childMap.entrySet();
 	}
@@ -85,7 +100,7 @@ public class DictionaryNode {
 		return this.parent;
 	}
 
-	public DictionaryNode returnToTop() {
+	public DictionaryNode getRoot() {
 		DictionaryNode currentNode = this;
 		while (currentNode.parentPath != null) {
 			currentNode = currentNode.parent;

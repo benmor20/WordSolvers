@@ -76,15 +76,45 @@ public class UnknownWord {
         return str + filter;
     }
 
+    public Collection<String> possibleAnagrams(DictionaryNode wordTree) {
+        return this.possibleAnagrams(wordTree, 1);
+    }
+    public Collection<String> possibleAnagrams(DictionaryNode wordTree, int maxWords) {
+        Collection<String> ret = new LinkedHashSet<>();
+
+        if (!this.isPossible()) return ret;
+        if (this.spaces.size() == 0) {
+            if (wordTree.isWord()) ret.add(wordTree.toString());
+            return ret;
+        }
+        if (wordTree.isWord() && maxWords > 1) {
+            //System.out.println("Max words: " + maxWords);
+            String word = wordTree + " ";
+            Collection<String> newWords = this.possibleAnagrams(wordTree.getRoot(), maxWords - 1);
+            for (String newWord : newWords) {
+                // TODO: sort alphabetically so you don't get all permutations of word
+                ret.add(word + newWord);
+            }
+        } /*else {
+            System.out.println(wordTree + " is word: " + wordTree.isWord());
+        }*/
+
+        for (int index = 0; index < this.spaces.size(); index++) {
+            BlankSpace space = this.getEffectiveSpace(index);
+            UnknownWord withoutSpace = this.cutSpace(index);
+            Collection<DictionaryNode> possibleNodes = wordTree.getChildrenFrom(space);
+            for (DictionaryNode child : possibleNodes) {
+                ret.addAll(withoutSpace.possibleAnagrams(child, maxWords));
+            }
+        }
+        return ret;
+    }
+
     public Collection<String> possibleWords(DictionaryNode wordTree) {
         Collection<String> ret = new LinkedHashSet<>(); // Preserve order (roughly alphabetical) but prevent repeats
 
         // Ensure bounds are kept
-        int[] bounds = this.getLengthBounds();
-        int minLen = bounds[0], maxLen = bounds[1];
-        if (this.hasFilter() && (minLen > this.filter.maxBlanks || maxLen < this.filter.minBlanks)) {
-            return ret;
-        }
+        if (!this.isPossible()) return ret;
 
         // If no more letters, return list containing current word, or empty list if currentNode is not a word
         UnknownWord cutFirst = this.cutFirstLetter();
@@ -98,7 +128,7 @@ public class UnknownWord {
         // If there is at least one letter left, get the possible characters (w/ filter) and recurse
         BlankSpace firstSpace = this.getEffectiveSpace(0);
         if (firstSpace.minBlanks == 0) {
-            ret.addAll(this.cutFirstSpace().possibleWords(wordTree));
+            ret.addAll(this.cutSpace(0).possibleWords(wordTree));
         }
         for (char c : firstSpace.possibleCharacters) {
             if (!wordTree.hasChild(c)) {
@@ -109,7 +139,7 @@ public class UnknownWord {
         return ret;
     }
 
-    private UnknownWord cutFirstLetter() {
+    public UnknownWord cutFirstLetter() {
         int maxLetters = this.getLengthBounds()[1];
         if (maxLetters == 0) {
             return null;
@@ -130,8 +160,10 @@ public class UnknownWord {
         }
     }
 
-    private UnknownWord cutFirstSpace() {
-        return new UnknownWord(this.spaces.subList(1, this.spaces.size()), this.filter, this.hardFilter);
+    public UnknownWord cutSpace(int index) {
+        BlankSpace space = this.spaces.get(index);
+        BlankSpace filter = this.hasFilter() ? this.filter.cloneMinusSpace(space.minBlanks, space.maxBlanks) : null;
+        return new UnknownWord(WordUtils.withoutIndex(this.spaces, index), filter, this.hardFilter);
     }
 
     // Returns a 2 element array containing the minimum and maximum word length
@@ -142,5 +174,11 @@ public class UnknownWord {
             max = WordUtils.addWithOverflow(max, space.maxBlanks);
         }
         return new int[] { min, max };
+    }
+
+    private boolean isPossible() {
+        int[] bounds = this.getLengthBounds();
+        int minLen = bounds[0], maxLen = bounds[1];
+        return !this.hasFilter() || (minLen <= this.filter.maxBlanks && maxLen >= this.filter.minBlanks);
     }
 }
