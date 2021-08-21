@@ -118,6 +118,7 @@ public class WordUtils {
 		DictionaryNode topNode = new DictionaryNode();
 		for (String word : words) {
 			DictionaryNode currentNode = topNode;
+			word = cleanWord(word);
 			for (int index = 0; index < word.length() - 1; index++) {
 				char c = word.charAt(index);
 				if (currentNode.hasChild(c)) currentNode = currentNode.getChild(c);

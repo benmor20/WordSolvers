@@ -5,7 +5,9 @@ import wordsolvers.utils.GetUserInput;
 import wordsolvers.utils.WordUtils;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class WordSearchSolver {
 	private static final String WORD_SEARCH =
@@ -108,11 +110,19 @@ public class WordSearchSolver {
 			System.out.println("Sorry, no words found.");
 			return;
 		}
-		System.out.println("Search complete! Found " + numWords + " word(s):");
+		System.out.println("Search complete! Found " + numWords + " word" + (numWords == 1 ? "" : "s") + ":");
 		List<String> words = new ArrayList<>(); // list of options to input
+		Map<String, List<FoundWordInfo>> wordsToInfo = new HashMap<>();
 		for (FoundWordInfo wordInfo : foundWords) {
 			System.out.println(wordInfo.word);
 			words.add(wordInfo.word);
+			if (wordsToInfo.get(wordInfo.word) == null) {
+				wordsToInfo.put(wordInfo.word, new ArrayList<>() {{
+					this.add(wordInfo);
+				}});
+			} else {
+				wordsToInfo.get(wordInfo.word).add(wordInfo);
+			}
 		}
 		words.add("e"); // can also input "e" for exit
 
@@ -121,42 +131,39 @@ public class WordSearchSolver {
 			String wordToDisplay = GetUserInput.getString("Type the word you want to find the location of, or type 'e' to exit. ",
 					words, false);
 			if (wordToDisplay.equalsIgnoreCase("e")) break;
-			for (FoundWordInfo wordInfo : foundWords) {
-				if (wordInfo.word.equalsIgnoreCase(wordToDisplay)) {
-					int len = wordInfo.word.length();
-					int[] scales = directionToScales(wordInfo.direction);
-					int maxRow = wordInfo.startRow + scales[0] * (len - 1),
-							maxCol = wordInfo.startCol + scales[1] * (len - 1); // might not be max, but the isBetween function will handle that case
+			for (FoundWordInfo wordInfo : wordsToInfo.get(wordToDisplay)) {
+				int len = wordInfo.word.length();
+				int[] scales = directionToScales(wordInfo.direction);
+				int maxRow = wordInfo.startRow + scales[0] * (len - 1),
+						maxCol = wordInfo.startCol + scales[1] * (len - 1); // might not be max, but the isBetween function will handle that case
 
-					// Print board, capitalizing the word
-					for (int row = 0; row < wordSearch.length; row++) {
-						for (int col = 0; col < wordSearch[row].length; col++) {
-							// Determine capitalization
-							boolean capitalize;
-							// Reverse calculate the number of steps out this would be. MAX_VALUE as flag for orthogonal, which would result in division by 0
-							int rowOffset = scales[0] == 0 ? Integer.MAX_VALUE : (row - wordInfo.startRow) / scales[0],
-									colOffset = scales[1] == 0 ? Integer.MAX_VALUE : (col - wordInfo.startCol) / scales[1];
-							if (rowOffset == Integer.MAX_VALUE) { // Horizontal
-								capitalize = row == wordInfo.startRow && WordUtils.isBetween(col, wordInfo.startCol, maxCol, true);
-							} else if (colOffset == Integer.MAX_VALUE) { // Vertical
-								capitalize = col == wordInfo.startCol && WordUtils.isBetween(row, wordInfo.startRow, maxRow, true);
-							} else { // Diagonal
-								capitalize = rowOffset == colOffset && rowOffset >= 0 && rowOffset < len;
-							}
-
-							// Print
-							// TODO still hard to see letters in word search - is bold an option?
-							if (capitalize) {
-								System.out.print((wordSearch[row][col] + " ").toUpperCase());
-							} else {
-								System.out.print(wordSearch[row][col] + " ");
-							}
+				// Print board, capitalizing the word
+				for (int row = 0; row < wordSearch.length; row++) {
+					for (int col = 0; col < wordSearch[row].length; col++) {
+						// Determine capitalization
+						boolean capitalize;
+						// Reverse calculate the number of steps out this would be. MAX_VALUE as flag for orthogonal, which would result in division by 0
+						int rowOffset = scales[0] == 0 ? Integer.MAX_VALUE : (row - wordInfo.startRow) / scales[0],
+								colOffset = scales[1] == 0 ? Integer.MAX_VALUE : (col - wordInfo.startCol) / scales[1];
+						if (rowOffset == Integer.MAX_VALUE) { // Horizontal
+							capitalize = row == wordInfo.startRow && WordUtils.isBetween(col, wordInfo.startCol, maxCol, true);
+						} else if (colOffset == Integer.MAX_VALUE) { // Vertical
+							capitalize = col == wordInfo.startCol && WordUtils.isBetween(row, wordInfo.startRow, maxRow, true);
+						} else { // Diagonal
+							capitalize = rowOffset == colOffset && rowOffset >= 0 && rowOffset < len;
 						}
-						System.out.println();
+
+						// Print
+						// TODO still hard to see letters in word search - is bold an option?
+						if (capitalize) {
+							System.out.print("\033[0;1m" + (wordSearch[row][col] + " ").toUpperCase() + "\033[0;0m");
+						} else {
+							System.out.print(wordSearch[row][col] + " ");
+						}
 					}
 					System.out.println();
-					// Do not continue - might have more than one instance of the word in the word search
 				}
+				System.out.println();
 			}
 		}
 	}
