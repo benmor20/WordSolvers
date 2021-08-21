@@ -1,5 +1,8 @@
 package wordsolvers.main;
 
+import wordsolvers.structs.BlankSpace;
+import wordsolvers.structs.DictionaryNode;
+import wordsolvers.structs.UnknownWord;
 import wordsolvers.utils.WordUtils;
 
 import java.util.*;
@@ -11,24 +14,24 @@ public class WordJumble {
 
 	public static void main(String[] args) {
 		Random rand = new Random();
-		List<String> currentWords = new ArrayList<>();
-		for (int wordNum = 0; wordNum < JUMBLE_LEN; wordNum++) {
-			int wordRanking = rand.nextInt(NUM_ACCEPTABLE_WORDS);
-			String word = WordUtils.getWordFromRanking(wordRanking);
-			while (currentWords.contains(word) || word.length() < MIN_WORD_LEN) {
-				wordRanking = rand.nextInt(NUM_ACCEPTABLE_WORDS);
-				word = WordUtils.getWordFromRanking(wordRanking);
-			}
-			currentWords.add(word);
+		UnknownWord pattern = new UnknownWord(new ArrayList<>() {{
+			this.add(new BlankSpace(true, 6, Integer.MAX_VALUE, true));
+		}});
+		DictionaryNode tree = WordUtils.createTreeWithMostCommonWords(NUM_ACCEPTABLE_WORDS);
+		List<String> allWords = new ArrayList<>(pattern.possibleWords(tree));
 
-			char[] array = word.toCharArray();
-			List<Character> shuffled = new ArrayList<>();
-			for (char c : array) {
-				shuffled.add(c);
-			}
-			Collections.shuffle(shuffled, rand);
+		Collection<String> currentWords = new LinkedHashSet<>();
+		while (currentWords.size() < JUMBLE_LEN) {
+			currentWords.add(allWords.get(rand.nextInt(allWords.size())).toUpperCase());
+		}
 
-			for (char c: shuffled) {
+		for (String word : currentWords) {
+			List<Character> shuffledLetters = new ArrayList<>();
+			for (char c : word.toCharArray()) {
+				shuffledLetters.add(c);
+			}
+			Collections.shuffle(shuffledLetters);
+			for (char c : shuffledLetters) {
 				System.out.print(c);
 			}
 			System.out.println();

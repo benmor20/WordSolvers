@@ -12,6 +12,7 @@ public class WordUtils {
 	private static DictionaryNode dictTree;
 	private static Map<String, Long> frequencies;
 	private static Map<String, Integer> rankings;
+	private static List<String> wordsRanked;
 
 	private static void readDict(String dictPath, String frequencyPath) {
 		try {
@@ -19,13 +20,15 @@ public class WordUtils {
 			dictionary = new ArrayList<>();
 			frequencies = new HashMap<>();
 			rankings = new HashMap<>();
-			int rank = 1;
+			wordsRanked = new ArrayList<>();
+			int rank = 0;
 
 			BufferedReader freqReader = new BufferedReader(new FileReader(frequencyPath));
 			while ((line = freqReader.readLine()) != null) {
 				String[] info = line.toLowerCase().split("\t");
 				frequencies.put(info[0], Long.parseLong(info[1]));
 				rankings.put(info[0], rank);
+				wordsRanked.add(info[0]);
 				rank++;
 			}
 			freqReader.close();
@@ -95,19 +98,20 @@ public class WordUtils {
 
 	public static List<String> getDict() {
 		if (dictionary == null) readDict();
-		return dictionary;
+		return new ArrayList<>(dictionary);
 	}
 	public static DictionaryNode getDictTree() {
 		if (dictTree == null) readDict();
 		return dictTree;
 	}
+	public static List<String> getOrderedWords() {
+		if (wordsRanked == null) readDict();
+		return new ArrayList<>(dictionary);
+	}
 
 	public static String getWordFromRanking(int ranking) {
-		if (rankings == null) readDict();
-		for (Map.Entry<String, Integer> rankingEntry : rankings.entrySet()) {
-			if (rankingEntry.getValue() == ranking) return rankingEntry.getKey();
-		}
-		return null;
+		if (wordsRanked == null) readDict();
+		return wordsRanked.get(ranking);
 	}
 
 	public static DictionaryNode createDictionaryTree(List<String> words) {
@@ -124,6 +128,11 @@ public class WordUtils {
 			else currentNode.addChild(last, true);
 		}
 		return topNode;
+	}
+
+	public static DictionaryNode createTreeWithMostCommonWords(int numWords) {
+		if (wordsRanked == null) readDict();
+		return createDictionaryTree(wordsRanked.subList(0, numWords));
 	}
 
 	public static boolean isBetween(int value, int side1, int side2, boolean inclusive) {
