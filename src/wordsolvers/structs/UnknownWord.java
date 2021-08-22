@@ -89,15 +89,21 @@ public class UnknownWord {
         }
         if (wordTree.isWord() && maxWords > 1) {
             //System.out.println("Max words: " + maxWords);
-            String word = wordTree + " ";
+            String word = wordTree.toString();
             Collection<String> newWords = this.possibleAnagrams(wordTree.getRoot(), maxWords - 1);
             for (String newWord : newWords) {
-                // TODO: sort alphabetically so you don't get all permutations of word
-                ret.add(word + newWord);
+                List<String> wordsToSort = new ArrayList<>();
+                wordsToSort.add(word);
+                Collections.addAll(wordsToSort, newWord.split(" "));
+                Collections.sort(wordsToSort);
+                StringBuilder sortedPhrase = new StringBuilder();
+                for (String sortedWord : wordsToSort) {
+                    sortedPhrase.append(sortedWord);
+                    sortedPhrase.append(" ");
+                }
+                ret.add(sortedPhrase.substring(0, sortedPhrase.length() - 1));
             }
-        } /*else {
-            System.out.println(wordTree + " is word: " + wordTree.isWord());
-        }*/
+        }
 
         for (int index = 0; index < this.spaces.size(); index++) {
             BlankSpace space = this.getEffectiveSpace(index);

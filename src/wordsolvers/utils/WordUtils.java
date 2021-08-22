@@ -75,6 +75,15 @@ public class WordUtils {
 		return score / phrase.length;
 	}
 
+	public static Map<String, Double> mapToScores(Collection<String> phrases) {
+		Map<String, Double> map = new HashMap<>();
+		for (String phrase : phrases) {
+			if (map.containsKey(phrase)) continue;
+			map.put(phrase, scorePhrase(phrase));
+		}
+		return map;
+	}
+
 	public static long getFrequency(String word) {
 		if (frequencies == null) readDict();
 		Long freq = frequencies.get(cleanWord(word));
