@@ -9,7 +9,14 @@ public class CipherSolver {
 	public static void main(String[] args) {
 		String cipher = GetUserInput.getString("Enter the cipher. ");
 
-		WordUtils.readDict();
+		if (args.length > 0 && args[0].equals("c")) {
+			for (int offset = 0; offset < 26; offset++) {
+				System.out.println(caesar(cipher, offset));
+			}
+			return;
+		} else if (args.length > 0) {
+			System.out.println("Unknown code: " + args[0]);
+		}
 		System.out.println("  CAESAR: " + caesar(cipher));
 		System.out.println("  ATBASH: " + atbash(cipher));
 		System.out.println("   A1Z26: " + a1z26(cipher));
@@ -24,42 +31,37 @@ public class CipherSolver {
 		return new StringBuilder(input).reverse().toString();
 	}
 
-	public static String caesar(String input) {
-		String[] cipherWords = input.split(" ");
-
-		int[] numWords = new int[26];
-		String[] decodedMessages = new String[26];
-		int maxCount = 0, maxCountOffset = 0;
-		for (int offset = 0; offset < 26; offset++) {
-			StringBuilder decodedWords = new StringBuilder();
-			for (int wordIndex = 0; wordIndex < cipherWords.length; wordIndex++) {
-				String codedWord = cipherWords[wordIndex];
-				StringBuilder decodedWord = new StringBuilder();
-				for (char c : codedWord.toCharArray()) {
-					char shiftedChar;
-					if (c >= 'a' && c <= 'z') {
-						shiftedChar = (char)(c + offset);
-						if (shiftedChar > 'z') shiftedChar -= 26;
-					} else if (c >= 'A' && c <= 'Z') {
-						shiftedChar = (char)(c + offset);
-						if (shiftedChar > 'Z') shiftedChar -= 26;
-					} else {
-						shiftedChar = c;
-					}
-					decodedWord.append(shiftedChar);
-				}
-				String word = decodedWord.toString();
-				if (WordUtils.isWord(word)) numWords[offset]++;
-				decodedWords.append(word);
-				decodedWords.append(" ");
+	public static String caesar(String input, int offset) {
+		StringBuilder res = new StringBuilder();
+		for (char c : input.toCharArray()) {
+			if (c >= 'a' && c <= 'z') {
+				char shift = (char)(c + offset);
+				res.append(shift > 'z' ? (char)(shift - 26) : shift);
+			} else if (c >= 'A' && c <= 'Z') {
+				char shift = (char)(c + offset);
+				res.append(shift > 'Z' ? (char)(shift - 26) : shift);
+			} else {
+				res.append(c);
 			}
-			decodedMessages[offset] = decodedWords.toString();
-			if (numWords[offset] > maxCount) {
-				maxCount = numWords[offset];
+		}
+		return res.toString();
+	}
+
+	public static String caesar(String input) {
+		String[] decodedMessages = new String[26];
+		int maxCount = 0, maxCountOffset = -1;
+		for (int offset = 0; offset < 26; offset++) {
+			decodedMessages[offset] = caesar(input, offset);
+			int numWords = 0;
+			for (String word : decodedMessages[offset].split(" ")) {
+				if (WordUtils.isWord(word)) numWords++;
+			}
+			if (numWords > maxCount) {
+				maxCount = numWords;
 				maxCountOffset = offset;
 			}
 		}
-		return maxCountOffset == 0 ? "" : decodedMessages[maxCountOffset];
+		return maxCountOffset == -1 ? "" : decodedMessages[maxCountOffset];
 	}
 
 	public static String atbash(String input) {

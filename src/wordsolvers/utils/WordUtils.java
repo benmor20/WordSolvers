@@ -1,6 +1,7 @@
 package wordsolvers.utils;
 
 import wordsolvers.structs.DictionaryNode;
+import wordsolvers.structs.UnknownWord;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -173,5 +174,38 @@ public class WordUtils {
 			ret.add(ele);
 		}
 		return ret;
+	}
+
+	public static DictionaryNode intersection(DictionaryNode node, List<UnknownWord> wordList) {
+		DictionaryNode root = new DictionaryNode();
+		boolean hasLetters = false;
+		List<UnknownWord> listMinus1 = new ArrayList<>();
+		for (UnknownWord word : wordList) {
+			if (word.maxSpaces() > 0) {
+				hasLetters = true;
+				UnknownWord cut = word.cutFirstLetter();
+				if (cut.maxSpaces() > 0) {
+					listMinus1.add(cut);
+				}
+			}
+		}
+		if (!hasLetters) {
+			return node;
+		}
+
+		for (UnknownWord word : wordList) {
+			Set<Character> possPaths = word.getEffectiveSpace(0).possibleCharacters;
+			for (char c : possPaths) {
+				if (node.hasChild(c)) {
+					if (!root.hasChild(c)) {
+						root.addChild(c, intersection(node.getChild(c), listMinus1));
+					}
+					if (word.minSpaces() == 0) {
+						root.getChild(c).setIsWord(true);
+					}
+				}
+			}
+		}
+		return node;
 	}
 }

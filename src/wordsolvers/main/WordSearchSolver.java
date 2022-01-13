@@ -1,6 +1,9 @@
 package wordsolvers.main;
 
+import wordsolvers.structs.BlankSpace;
 import wordsolvers.structs.DictionaryNode;
+import wordsolvers.structs.UnknownWord;
+import wordsolvers.structs.parsers.UnknownWordParser;
 import wordsolvers.utils.GetUserInput;
 import wordsolvers.utils.WordUtils;
 
@@ -11,43 +14,23 @@ import java.util.Map;
 
 public class WordSearchSolver {
 	private static final String WORD_SEARCH =
-			"CDENOIHSAFAREIRAETLIF\n" +
-			"OERNFUCHSIAATNEGAMIAC\n" +
-			"IRTCLOUSEAUYOSBGUARBE\n" +
-			"FIELDHOCKEYHOAGKNNEEI\n" +
-			"NSOCCERTTOTJEETETDDTA\n" +
-			"DISTURBMBONEDYSPRRAIO\n" +
-			"ROCARNIESANTSOJLIARTD\n" +
-			"INFRINGESNLORTEUEKTLG\n" +
-			"ESROMDLHUNOLIEAPDESER\n" +
-			"NORWEGIANWOODLOMTEENO\n" +
-			"COMETOGETHERRAIREGLAW\n" +
-			"RSNICSONTINDCEDMLNKLT\n" +
-			"OUCSSAPSERTSIIMNRLTYH\n" +
-			"APGHEMLOCKEECNMAAETNO\n" +
-			"CRABORFOENIVRIANCWVNR\n" +
-			"HICAYOFESONGAIDYSBREE\n" +
-			"ATFOXGLOVELESJSOCNGPS";
-	private static final int MIN_WORD_LENGTH = 5;
+			("I\tS\tY\tO\tT\tS\tI\tM\tE\tH\tC\tL\tR\tD\tF\n" +
+					"N\tG\tY\tL\tD\tE\tR\tU\tS\tS\tA\tC\tI\tI\tR\n" +
+					"T\tN\tB\tY\tI\tE\tT\tS\tE\tI\tO\tM\tL\tS\tH\n" +
+					"O\tI\tA\tE\tL\tD\tR\tW\tT\tR\tM\tA\tL\tP\tI\n" +
+					"N\tS\tR\tW\tR\tE\tE\tN\tN\tI\tM\tK\tE\tE\tN\n" +
+					"I\tI\tO\tI\tL\tR\tE\tE\tN\tE\tC\tS\tS\tN\tT\n" +
+					"N\tR\tM\tL\tE\tR\tR\tE\tN\tO\tN\tC\tO\tS\tE\n" +
+					"G\tA\tE\tD\tE\tE\tN\tT\tL\tH\tA\tI\tD\tE\tR\n" +
+					"D\tS\tT\tF\tD\tT\tE\tD\tE\tL\tG\tN\tI\tS\tL\n" +
+					"N\tM\tE\tE\tS\tS\tA\tA\tA\tG\tE\tI\tN\tT\tA\n" +
+					"H\tR\tR\tE\tS\tP\tE\tT\tA\tR\tO\tR\tP\tE\tC\n" +
+					"P\tS\tP\tO\tT\tS\tE\tD\tI\tS\tF\tF\tO\tS\tE").replaceAll("\t", "");
+	private static final int MIN_WORD_LENGTH = 3;
 
 	public static void main(String[] args) {
-		boolean hasList = GetUserInput.getBoolean("Is there a list of words provided? ");
-
-		// Find word list, or compile dictionary as word list
-		DictionaryNode dict;
-		if (hasList) {
-			List<String> wordList = new ArrayList<>();
-			String word = GetUserInput.getString("Enter the first word on the list. ");
-			while (!word.equalsIgnoreCase("d")) {
-				wordList.add(word.replace(" ", ""));
-				word = GetUserInput.getString("Enter the next word on the list, or 'd' for done. ");
-			}
-			System.out.println();
-			dict = WordUtils.createDictionaryTree(wordList);
-		}
-		else {
-			dict = WordUtils.getDictTree();
-		}
+		System.out.println(WORD_SEARCH);
+		DictionaryNode dict = getWordList();
 
 		// Reformat WORD_SEARCH into a char[][]
 		String[] wsByRow = WORD_SEARCH.split("\n");
@@ -55,54 +38,7 @@ public class WordSearchSolver {
 		for (int row = 0; row < wsByRow.length; row++) {
 			wordSearch[row] = wsByRow[row].toLowerCase().toCharArray();
 		}
-
-		// Search for words
-		List<FoundWordInfo> foundWords = new ArrayList<>();
-		for (int row = 0; row < wordSearch.length; row++) {
-			for (int col = 0; col < wordSearch[row].length; col++) {
-				char curChar = wordSearch[row][col];
-				// If no word starts with the current letter, skip
-				if (!dict.hasChild(curChar)) continue;
-
-				// Create node array, one node for each way the word can go (orthogonal + diagonal)
-				DictionaryNode[] words = new DictionaryNode[8];
-				for (int initTree = 0; initTree < words.length; initTree++) {
-					words[initTree] = dict.getChild(curChar);
-				}
-
-				// Propogate out, look for words
-				boolean done = false;
-				for (int step = 1; !done; step++) {
-					done = true;
-					for (int direction = 0; direction < words.length; direction++) {
-						if (words[direction] == null) continue;
-						done = false; // Still have valid words, can go another step out
-
-						// Find working row/col
-						int[] scales = directionToScales(direction);
-						int rowCheck = row + step * scales[0],
-								colCheck = col + step * scales[1];
-
-						// If out of bounds, set current direction's node to null and continue
-						if (rowCheck < 0 || rowCheck >= wordSearch.length) {
-							words[direction] = null;
-							continue;
-						}
-						else if (colCheck < 0 || colCheck >= wordSearch[rowCheck].length) {
-							words[direction] = null;
-							continue;
-						}
-
-						// Advance step, check if still on tree, or if found word
-						words[direction] = words[direction].getChild(wordSearch[rowCheck][colCheck]);
-						if (words[direction] == null) continue;
-						if ((hasList || words[direction].depth() >= MIN_WORD_LENGTH) && words[direction].isWord()) {
-							foundWords.add(new FoundWordInfo(words[direction].toString(), row, col, direction));
-						}
-					}
-				}
-			}
-		}
+		List<FoundWordInfo> foundWords = findWords(wordSearch, dict);
 
 		// Display words
 		int numWords = foundWords.size();
@@ -166,6 +102,106 @@ public class WordSearchSolver {
 				System.out.println();
 			}
 		}
+	}
+
+	// Goes through the word search looking for words
+	private static List<FoundWordInfo> findWords(char[][] wordSearch, DictionaryNode dict) {
+		// Search for words
+		boolean hasList = false;
+		List<FoundWordInfo> foundWords = new ArrayList<>();
+		for (int row = 0; row < wordSearch.length; row++) {
+			for (int col = 0; col < wordSearch[row].length; col++) {
+				char curChar = wordSearch[row][col];
+				// If no word starts with the current letter, skip
+				if (!dict.hasChild(curChar)) continue;
+
+				// Create node array, one node for each way the word can go (orthogonal + diagonal)
+				DictionaryNode[] words = new DictionaryNode[8];
+				for (int initTree = 0; initTree < words.length; initTree++) {
+					words[initTree] = dict.getChild(curChar);
+				}
+
+				// Propogate out, look for words
+				boolean done = false;
+				for (int step = 1; !done; step++) {
+					done = true;
+					for (int direction = 0; direction < words.length; direction++) {
+						if (words[direction] == null) continue;
+						done = false; // Still have valid words, can go another step out
+
+						// Find working row/col
+						int[] scales = directionToScales(direction);
+						int rowCheck = row + step * scales[0],
+								colCheck = col + step * scales[1];
+
+						// If out of bounds, set current direction's node to null and continue
+						if (rowCheck < 0 || rowCheck >= wordSearch.length) {
+							words[direction] = null;
+							continue;
+						}
+						else if (colCheck < 0 || colCheck >= wordSearch[rowCheck].length) {
+							words[direction] = null;
+							continue;
+						}
+
+						// Advance step, check if still on tree, or if found word
+						words[direction] = words[direction].getChild(wordSearch[rowCheck][colCheck]);
+						if (words[direction] == null) continue;
+						if ((hasList || words[direction].currentDepth() >= MIN_WORD_LENGTH) && words[direction].isWord()) {
+							foundWords.add(new FoundWordInfo(words[direction].toString(), row, col, direction));
+						}
+					}
+				}
+			}
+		}
+
+		return foundWords;
+	}
+
+	// Creates a dictionary tree based on user's word list
+	public static DictionaryNode getWordList() {
+		boolean hasList = GetUserInput.getBoolean("Is there a list of words provided? ");
+
+		// Find word list, or compile dictionary as word list
+		DictionaryNode dict = null;
+		List<UnknownWord> wordList = new ArrayList<>();
+		if (hasList) {
+			UnknownWordParser parser = new UnknownWordParser();
+			String word = GetUserInput.getString("Enter the first word on the list. ");
+			while (!word.equalsIgnoreCase("d")) {
+				word = word.replace(" ", "");
+				wordList.add(parser.parse(word));
+				word = GetUserInput.getString("Enter the next word on the list, or 'd' for done. ");
+			}
+			System.out.println();
+
+			// If all are determinant, make tree. Else, use dictionary
+			boolean customTree = true;
+			for (UnknownWord unknown : wordList) {
+				if (!unknown.isDeterminant()) {
+					customTree = false;
+				}
+			}
+			if (customTree) {
+				List<String> detList = new ArrayList<>();
+				for (UnknownWord unknown : wordList) {
+					detList.add(parser.serialize(unknown));
+				}
+				dict = WordUtils.createDictionaryTree(detList);
+			}
+		}
+
+		if (dict == null) { // If no word list provided, or list is not full determined, use full dictionary
+			dict = WordUtils.getDictTree();
+		}
+		if (wordList.size() == 0) { // If no word list provided, possibilities are any word
+			List<BlankSpace> space = new ArrayList<>() {{
+				this.add(new BlankSpace(true, MIN_WORD_LENGTH, Integer.MAX_VALUE, true));
+			}};
+			wordList.add(new UnknownWord(space));
+		}
+
+		return WordUtils.intersection(dict, wordList);
 	}
 
 	private static class FoundWordInfo {

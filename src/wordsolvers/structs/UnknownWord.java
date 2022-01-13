@@ -34,6 +34,16 @@ public class UnknownWord {
         return this.hardFilter;
     }
 
+    // Returns whether this word can only represent one thing
+    public boolean isDeterminant() {
+        for (BlankSpace space : this.spaces) {
+            if (!space.isDeterminant()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     public List<BlankSpace> getSpaces() {
         return this.spaces;
     }
@@ -56,6 +66,34 @@ public class UnknownWord {
             return this.getSpace(index);
         }
         return this.spaces.get(index).withFilter(this.filter.possibleCharacters, this.hardFilter);
+    }
+
+    public UnknownWord cutSpace(int index) {
+        BlankSpace space = this.spaces.get(index);
+        BlankSpace filter = this.hasFilter() ? this.filter.cloneMinusSpace(space.minBlanks, space.maxBlanks) : null;
+        return new UnknownWord(WordUtils.withoutIndex(this.spaces, index), filter, this.hardFilter);
+    }
+
+    // Returns a 2 element array containing the minimum and maximum word length
+    private int[] getLengthBounds() {
+        int min = 0, max = 0;
+        for (BlankSpace space : this.spaces) {
+            min += space.minBlanks;
+            max = WordUtils.addWithOverflow(max, space.maxBlanks);
+        }
+        return new int[] { min, max };
+    }
+    public int minSpaces() {
+        return this.getLengthBounds()[0];
+    }
+    public int maxSpaces() {
+        return this.getLengthBounds()[1];
+    }
+
+    private boolean isPossible() {
+        int[] bounds = this.getLengthBounds();
+        int minLen = bounds[0], maxLen = bounds[1];
+        return !this.hasFilter() || (minLen <= this.filter.maxBlanks && maxLen >= this.filter.minBlanks);
     }
 
     @Override
@@ -137,6 +175,16 @@ public class UnknownWord {
             ret.addAll(this.cutSpace(0).possibleWords(wordTree));
         }
         for (char c : firstSpace.possibleCharacters) {
+            if (c == ' ') {
+                if (wordTree.isWord()) {
+                    String word = wordTree.toString();
+                    Collection<String> next = cutFirst.possibleWords(wordTree.getRoot());
+                    for (String phrase : next) {
+                        ret.add(word + " " + phrase);
+                    }
+                }
+                continue;
+            }
             if (!wordTree.hasChild(c)) {
                 continue;
             }
@@ -164,27 +212,5 @@ public class UnknownWord {
             if (firstBlank.maxBlanks > 1) skipFirst.add(0, firstBlank.cloneOneLess());
             return new UnknownWord(skipFirst, this.hasFilter() ? this.filter.cloneOneLess() : null, this.hardFilter);
         }
-    }
-
-    public UnknownWord cutSpace(int index) {
-        BlankSpace space = this.spaces.get(index);
-        BlankSpace filter = this.hasFilter() ? this.filter.cloneMinusSpace(space.minBlanks, space.maxBlanks) : null;
-        return new UnknownWord(WordUtils.withoutIndex(this.spaces, index), filter, this.hardFilter);
-    }
-
-    // Returns a 2 element array containing the minimum and maximum word length
-    private int[] getLengthBounds() {
-        int min = 0, max = 0;
-        for (BlankSpace space : this.spaces) {
-            min += space.minBlanks;
-            max = WordUtils.addWithOverflow(max, space.maxBlanks);
-        }
-        return new int[] { min, max };
-    }
-
-    private boolean isPossible() {
-        int[] bounds = this.getLengthBounds();
-        int minLen = bounds[0], maxLen = bounds[1];
-        return !this.hasFilter() || (minLen <= this.filter.maxBlanks && maxLen >= this.filter.minBlanks);
     }
 }

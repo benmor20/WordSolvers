@@ -51,15 +51,18 @@ public class BlankSpace implements Cloneable {
         this(bracketed, minBlanks, maxBlanks, false);
     }
     public BlankSpace(boolean bracketed, boolean negated, Collection<Character> cs) {
-        this(negated, bracketed);
+        this(bracketed, negated);
         this.appendAll(cs);
     }
     public BlankSpace(boolean bracketed, boolean negated, char c) {
-        this(negated, bracketed);
+        this(bracketed, negated);
         this.appendLetter(c);
     }
     public BlankSpace(boolean bracketed, boolean negated) {
         this(bracketed, 1, 1, negated);
+    }
+    public BlankSpace(boolean bracketed, Collection<Character> cs) {
+        this(bracketed, false, cs);
     }
     public BlankSpace(boolean bracketed, char c) {
         this(bracketed, false);
@@ -164,6 +167,11 @@ public class BlankSpace implements Cloneable {
     // Returns whether this blank is bracketed
     public boolean isBracketed() {
         return this.bracketed;
+    }
+
+    // Returns whether this blank can represent exactly one thing
+    public boolean isDeterminant() {
+        return this.possibleCharacters.size() == 1 && this.minBlanks == this.maxBlanks;
     }
 
     @Override

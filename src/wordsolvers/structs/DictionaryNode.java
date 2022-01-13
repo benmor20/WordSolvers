@@ -108,9 +108,55 @@ public class DictionaryNode {
 		return currentNode;
 	}
 
-	public int depth() {
+	public int currentDepth() {
 		if (this.parent == null) return 0;
-		return this.parent.depth() + 1;
+		return this.parent.currentDepth() + 1;
+	}
+	public int numLayersBelow() {
+		int maxLayers = -1;
+		for (DictionaryNode child : this.childMap.values()) {
+			int layers = child.numLayersBelow();
+			if (layers > maxLayers) {
+				maxLayers = layers;
+			}
+		}
+		return maxLayers + 1;
+	}
+
+	public void printFullTree() {
+		this.printFullTree(true);
+	}
+	private void printFullTree(boolean start) {
+		for (Map.Entry<Character, DictionaryNode> childInfo : this.getChildren()) {
+			char path = childInfo.getKey();
+			DictionaryNode child = childInfo.getValue();
+			System.out.print(path + ": " + child.isWord + ", (");
+			child.printFullTree(false);
+			System.out.print("), ");
+		}
+		if (start) {
+			System.out.println();
+		}
+	}
+
+	public Set<String> allWords() {
+		Set<String> res = new HashSet<>();
+		if (this.childMap.size() == 0) {
+			res.add("");
+			return res;
+		}
+		else if (this.isWord) {
+			res.add("");
+		}
+		for (Map.Entry<Character, DictionaryNode> childInfo : this.getChildren()) {
+			char path = childInfo.getKey();
+			DictionaryNode child = childInfo.getValue();
+			Set<String> nextLayer = child.allWords();
+			for (String word : nextLayer) {
+				res.add(path + word);
+			}
+		}
+		return res;
 	}
 
 	@Override
